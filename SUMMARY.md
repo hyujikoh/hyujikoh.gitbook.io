@@ -15,9 +15,10 @@
 
 ## Study
 
-* [Error 일지](study/error/README.md)
+* [📍 Error 일지](study/error/README.md)
   * [UnHandled Exception org.springframework.http.converter.HttpMessageConversionException](study/error/unhandled-exception-org.springframework.http.converter.httpmessageconversionexception.md)
-* [☕ Java](study/java.md)
+* [☕ Java](study/java/README.md)
+  * [equals , hashCode 란?](study/java/equals-hashcode.md)
 
 ## Use Cases
 
