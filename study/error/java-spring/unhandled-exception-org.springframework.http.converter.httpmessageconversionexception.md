@@ -1,6 +1,6 @@
 ---
 description: >-
-  UnHandled Exception
+  (2023-10-16) UnHandled Exception
   org.springframework.http.converter.HttpMessageConversionException: Type
   definition error 해결
 ---
