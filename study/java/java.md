@@ -68,3 +68,77 @@ public void fileTest(){
 
 </details>
 
+<details>
+
+<summary>구글 링크 접근 가능여부 (정상  접근)</summary>
+
+이제 제대로된 URL 이란걸 확인을 했으니 파일을 받아야 한다. 하지만, 알다시피 링크가 전체 사용자의 권한이 허용되어야 원활한 다운로드가 가능해진다. 만약 제한된 링크 일경우 정상적인 파일이 다운받아지지 않을것이다.&#x20;
+
+그러기 위해서 우리는 우선 해당 파일 링크가 정상적으로 접근이 가능한 파일인지 확인을하는 테스트를 만들어야할 필요가 있다.
+
+상식적으로 파일이 정상적으로 접근이 가능하면 아무래도 응답 코드는 `200` 이 나올것이다. 그렇지 않을 경우엔 접근 권한 오류인 `403` 에러가 나올것이다.([참고](https://developer.mozilla.org/ko/docs/Web/HTTP/Status/403)) 이 부분에 대해서 한번 테스트코드를 만들어보자.&#x20;
+
+```
+@Test
+public void fileAccessIsOk(){
+    String googleFileUrl = "https://drive.google.com/file/d/1HSrfZhvIHgdizKVnji8D7gJqT8n3ApGe/view";
+
+
+    //당연히 이렇게 하면 실패가 나올것이다.
+    assertEquals("200",googleFileUrl);
+
+}
+```
+
+이번엔 실제접근을 `RestTemplate`을 사용하여 접근시도를 해보겠다.
+
+
+
+1. build.gradle `implementation` 추가
+
+```
+ // build.gradle 에서 다음과 같이 추가
+ dependencies {
+  implementation('org.springframework.boot:spring-boot-starter-web')
+ }
+```
+
+
+
+2. 테스트 코드에 다음과 같이 `RestTemplate` 을 이용한 요청 코드 작성
+
+```
+@Test
+public void fileAccessIsOk(){
+    String googleFileUrl = "https://drive.google.com/file/d/1HSrfZhvIHgdizKVnji8D7gJqT8n3ApGe/view";
+
+    RestTemplate restTemplate = new RestTemplate();
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+    // 요청 바디 데이터 설정 (env 및 file)
+    MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+
+    // 원격 파일 다운로드 URL
+    URI url     = URI.create(googleFileUrl);
+
+    // 원격 파일 다운로드
+    RestTemplate           rt     = new RestTemplate();
+    ResponseEntity<byte[]> res    = rt.getForEntity(url, byte[].class);
+
+    // 응답 코드가 200 인 경우
+    assertEquals(HttpStatusCode.valueOf(200),res.getStatusCode());
+}
+```
+
+그렇게  테스트 를 하면 아래와 같이 브라우저로 접근이 가능한 파일 링크를 위와 같은 코드를 통해 접근이 가능해진다.
+
+<img src="../../.gitbook/assets/image (4).png" alt="test file link" data-size="original">
+
+<img src="../../.gitbook/assets/image (5).png" alt="테스트 통과" data-size="original">
+
+
+
+</details>
+
