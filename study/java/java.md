@@ -70,7 +70,9 @@ public void fileTest(){
 
 <details>
 
-<summary>구글 링크 접근 가능여부 (정상  접근)</summary>
+<summary>구글 링크 접근 가능여부</summary>
+
+### Access 전체 허용 URL 일 경우
 
 이제 제대로된 URL 이란걸 확인을 했으니 파일을 받아야 한다. 하지만, 알다시피 링크가 전체 사용자의 권한이 허용되어야 원활한 다운로드가 가능해진다. 만약 제한된 링크 일경우 정상적인 파일이 다운받아지지 않을것이다.&#x20;
 
@@ -117,13 +119,13 @@ public void fileAccessIsOk(){
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
-    // 요청 바디 데이터 설정 (env 및 file)
+
     MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
 
-    // 원격 파일 다운로드 URL
+  
     URI url     = URI.create(googleFileUrl);
 
-    // 원격 파일 다운로드
+
     RestTemplate           rt     = new RestTemplate();
     ResponseEntity<byte[]> res    = rt.getForEntity(url, byte[].class);
 
@@ -140,5 +142,126 @@ public void fileAccessIsOk(){
 
 
 
-</details>
+### &#x20;Private URL 인 경우(접근불가)
 
+앞서 예시를 든 URL은 전체 허용 URL 이다. 그러면 반대로 제한된 사용자만 허용된 URL 일 경우 어떻게 될까? 당연히 접근이 가능한 URL 이 status 가 `200 OK` 가 나왔으니까, `403` 에러가 나오지 않을까 싶다.
+
+역시 이를 위해 접근 제한 파일을 생성했다.
+
+<img src="../../.gitbook/assets/image (6).png" alt="" data-size="original">
+
+이 파일 URL 을 테스트코드를 작성하여 결과값을 403 으로 예상해보자
+
+```
+@Test
+public void fileAccessIs404(){
+    String privateFileUrl = "https://drive.google.com/drive/folders/13X0o5nwn6AQZrIKH1RDODQsfLOs9Zvu4";
+
+    RestTemplate restTemplate = new RestTemplate();
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+  
+    MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+
+ 
+    URI url     = URI.create(privateFileUrl);
+
+  
+    RestTemplate           rt     = new RestTemplate();
+    ResponseEntity<byte[]> res    = rt.getForEntity(url, byte[].class);
+
+    //당연히 이렇게 하면 실패가 나올것이다.
+    assertEquals(HttpStatusCode.valueOf(403),res.getStatusCode());
+}
+```
+
+<img src="../../.gitbook/assets/image (7).png" alt="" data-size="original">
+
+테스트 코드의 결과값은 200 이 나왔다. 그러면 전체 허용과, 제한된 허용 URL 에 대해서 res 가 어떻게 오는지 확인을 해보자
+
+```
+ // 정상적으로 허용 됐을떄 나오는 res
+ <200 OK OK,[B@5bb8f9e2,[Content-Type:"text/html; 
+ charset=utf-8", 
+ X-Robots-Tag:"noindex, 
+ nofollow, nosnippet", 
+ Cache-Control:"no-cache, 
+ no-store, max-age=0, 
+ must-revalidate", 
+ Pragma:"no-cache", 
+ Expires:"Mon, 01 Jan 1990 00:00:00 GMT", 
+ Date:"Tue, 14 Nov 2023 16:43:28 GMT", 
+ P3P:"CP="This is not a P3P policy! See g.co/p3phelp for more info."", 
+ Content-Security-Policy:"require-trusted-types-for 'script';report-uri https://csp.withgoogle.com/csp/docs-tt", 
+ Referrer-Policy:"origin", 
+ X-Content-Type-Options:"nosniff", 
+ X-Frame-Options:"SAMEORIGIN", 
+ X-XSS-Protection:"1; mode=block", 
+ Server:"GSE", 
+ Set-Cookie:"NID=511=NDGT2a_-W7MeztF7siZOTPE5KPniaiBnlowzhUPHT5QxzCFE8eEZ9fgTt7J-IpnLytotlsHoUgpMkJyvMpjNbozZQWmb8OMgy0pxWhW5rNpKfiO0EDgmuj9t24I2VuOAPINvNFzy3lnae-oe5-kZJKGPZuGl5xKQU8H32W-HjQg; expires=Wed, 
+ 15-May-2024 16:43:28 GMT; path=/; domain=.google.com; HttpOnly", Alt-Svc:"h3=":443"; ma=2592000,h3-29=":443"; ma=2592000", Accept-Ranges:"none", Vary:"Sec-Fetch-Dest, 
+ Sec-Fetch-Mode, Sec-Fetch-Site,Accept-Encoding", Transfer-Encoding:"chunked"
+ ]>
+ 
+ // 제한된 URL 접근시 나오는 res
+ <200 OK OK,[B@7c8326a4,[Content-Type:"text/html; 
+ charset=utf-8", 
+ X-Frame-Options:"DENY", 
+ Set-Cookie:"__Host-GAPS=1:FMaHaUN8FfUi6KULkFHVMbbpyefSjw:OKDv91b43OeHpU6M; 
+ Expires=Thu, 13-Nov-2025 16:45:59 GMT; 
+ Path=/; Secure; HttpOnly; 
+ Priority=HIGH", x-auto-login:"realm=com.google&args=service%3Dwise%26continue%3Dhttps://drive.google.com/drive/folders/13X0o5nwn6AQZrIKH1RDODQsfLOs9Zvu4", 
+ Link:"<https://www.google.com/intl/en-US/drive/>; rel="canonical"", 
+ x-ua-compatible:"IE=edge", 
+ Cache-Control:"no-cache, 
+ no-store, max-age=0, 
+ must-revalidate", 
+ Pragma:"no-cache", 
+ Expires:"Mon, 01 Jan 1990 00:00:00 GMT", Date:"Tue, 14 Nov 2023 16:45:59 GMT", Strict-Transport-Security:"max-age=31536000; includeSubDomains", Cross-Origin-Resource-Policy:"same-site", Report-To:"{"group":"AccountsSignInUi","max_age":2592000,"endpoints":[{"url":"https://csp.withgoogle.com/csp/report-to/AccountsSignInUi"}]}", 
+ Content-Security-Policy:"script-src 'report-sample' 'nonce-SXrtyaUCr9TPV8DafHMdCw' 'unsafe-inline';object-src 'none';base-uri 'self';report-uri /v3/signin/_/AccountsSignInUi/cspreport;worker-src 'self'", "require-trusted-types-for 'script';report-uri /v3/signin/_/AccountsSignInUi/cspreport", 
+ Accept-CH:"Sec-CH-UA-Arch, Sec-CH-UA-Bitness, Sec-CH-UA-Full-Version, Sec-CH-UA-Full-Version-List, Sec-CH-UA-Model, Sec-CH-UA-WoW64, Sec-CH-UA-Form-Factor, Sec-CH-UA-Platform, Sec-CH-UA-Platform-Version", Permissions-Policy:"ch-ua-arch=*, ch-ua-bitness=*, ch-ua-full-version=*, ch-ua-full-version-list=*, ch-ua-model=*, ch-ua-wow64=*, ch-ua-form-factor=*, ch-ua-platform=*, ch-ua-platform-version=*", 
+ Cross-Origin-Opener-Policy-Report-Only:"same-origin; report-to="AccountsSignInUi"", Server:"ESF", X-XSS-Protection:"0", X-Content-Type-Options:"nosniff", Alt-Svc:"h3=":443"; ma=2592000,h3-29=":443"; ma=2592000", Accept-Ranges:"none", Vary:"Sec-Fetch-Dest, 
+ Sec-Fetch-Mode, Sec-Fetch-Site,Accept-Encoding", Transfer-Encoding:"chunked"]
+ >
+```
+
+뭐... 주요한 결과만 보면 `X-Frame-Options` 이 `DENY` 일때 접근 제한자 URL 이라는걸 알수가 있다.&#x20;
+
+지금 서비스 로직을 변경 하여 충분히 구현을 할수 있지만, 이건 추후 리팩토링을 통해 구현할 것이다. \
+우선은 해당 res 의 `X-Frame-Options` 여부를 체크하여 URL 접근 여부를 확인하자
+
+```
+@Test
+public void fileAccessIs403(){
+    String privateFileUrl = "https://drive.google.com/drive/folders/13X0o5nwn6AQZrIKH1RDODQsfLOs9Zvu4";
+
+    RestTemplate restTemplate = new RestTemplate();
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+    // 요청 바디 데이터 설정 (env 및 file)
+    MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+
+    // 원격 파일 다운로드 URL
+    URI url     = URI.create(privateFileUrl);
+
+    // 원격 파일 다운로드
+    RestTemplate           rt     = new RestTemplate();
+    ResponseEntity<byte[]> res    = rt.getForEntity(url, byte[].class);
+
+    //당연히 이렇게 하면 실패가 나올것이다.
+    Assertions.assertTrue(res.toString().contains("X-Frame-Options:\"DENY\""));
+}
+```
+
+테스트 결과는 다음과 같이 나왔다!\
+
+
+<img src="../../.gitbook/assets/image (9).png" alt="" data-size="original">
+
+
+
+</details>
