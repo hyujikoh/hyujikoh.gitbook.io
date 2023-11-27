@@ -1,7 +1,7 @@
 # Java 구글 드라이브 파일 링크를 통해 파일 다운로드
 
 {% hint style="info" %}
-이번에 프로젝트에서 다운로드 링크를 통해&#x20;
+이번에 프로젝트에서 구글  드라이브링크를 통해  파일을 다운하는 법에 대해 정리
 {% endhint %}
 
 ## 개요
@@ -14,15 +14,6 @@
 * 파일 링크를 다운 받을때 전체 공유가 가능해야하고, 아닐경우엔 error 를 처리한다.
 
 ## 테스트를 통해서 구현해보기
-
-테스트 코드를  구성해봤다.
-
-```
-@Test
-public void fileTest(){
-    String googleFileUrl;
-}
-```
 
 <details>
 
@@ -70,7 +61,7 @@ public void fileTest(){
 
 <details>
 
-<summary>구글 링크 접근 가능여부</summary>
+<summary>구글 링크 접근 가능여부 테스트</summary>
 
 ### Access 전체 허용 URL 일 경우
 
@@ -172,7 +163,7 @@ public void fileAccessIs404(){
     RestTemplate           rt     = new RestTemplate();
     ResponseEntity<byte[]> res    = rt.getForEntity(url, byte[].class);
 
-    //당연히 이렇게 하면 실패가 나올것이다.
+
     assertEquals(HttpStatusCode.valueOf(403),res.getStatusCode());
 }
 ```
@@ -227,7 +218,7 @@ public void fileAccessIs404(){
  >
 ```
 
-뭐... 주요한 결과만 보면 `X-Frame-Options` 이 `DENY` 일때 접근 제한자 URL 이라는걸 알수가 있다.&#x20;
+뭐... 결과만 보면 `X-Frame-Options` 이 `DENY` 일때 접근 제한자 URL 이라는걸 알수가 있다.&#x20;
 
 지금 서비스 로직을 변경 하여 충분히 구현을 할수 있지만, 이건 추후 리팩토링을 통해 구현할 것이다. \
 우선은 해당 res 의 `X-Frame-Options` 여부를 체크하여 URL 접근 여부를 확인하자
@@ -252,7 +243,7 @@ public void fileAccessIs403(){
     RestTemplate           rt     = new RestTemplate();
     ResponseEntity<byte[]> res    = rt.getForEntity(url, byte[].class);
 
-    //당연히 이렇게 하면 실패가 나올것이다.
+ 
     Assertions.assertTrue(res.toString().contains("X-Frame-Options:\"DENY\""));
 }
 ```
@@ -261,6 +252,78 @@ public void fileAccessIs403(){
 
 
 <img src="../../.gitbook/assets/image (9).png" alt="" data-size="original">
+
+
+
+</details>
+
+<details>
+
+<summary>즉시 다운이 가능한 링크로 변환 및 다운로드</summary>
+
+이렇게 접근 가능한 링크는 즉시 다운로드가 가능한 링크가 아니다. 이 링크를 다운로드 링크로 변경 할 필요가 있다.&#x20;
+
+다음과 같은 서비스 로직을 통해 파일 다운로드 링크로 변환을 해봤다. 여기서 필요한건 드라이브 내 파일의 id 를 이용해 만드는 것이다.
+
+<pre><code><strong>public String fileUrlToDownloadUrl(String imageUrls) {
+</strong>        String[] splitLink = imageUrls.split("/");
+
+        // 이 부분은 파일의 ID를 추출하는 부분이므로 파일에 따라 인덱스가 다를 수 있습니다.
+        String fileId = splitLink[splitLink.length-1].contains("view") ? splitLink[splitLink.length-2]:splitLink[splitLink.length-1];
+        return "https://docs.google.com/u/0/uc?export=download&#x26;confirm=t&#x26;id=" + fileId;
+}
+</code></pre>
+
+이렇게 만든 URL은 `confirm=t` 를 포함하는데, 구글의 대용량 파일에 대해서 재차 확인을 요구하기 때문에 이 URL 에 대해서 신뢰하겠다라는 일종의 동의 같은것이라 보면 된다.
+
+이렇게 만든 URL 을 이용해 다운로드 및 저장하는 로직을 만들어 보겠다.
+
+```
+@Test
+public void finalFileDownload(){
+    String googleFileUrl = "https://drive.google.com/file/d/1HSrfZhvIHgdizKVnji8D7gJqT8n3ApGe/view";
+
+    String downloadURl = this.fileUrlToDownloadUrl(googleFileUrl);
+
+    URI url     = URI.create(downloadURl);
+
+    // 원격 파일 다운로드
+    RestTemplate           rt     = new RestTemplate();
+    ResponseEntity<byte[]> res    = rt.getForEntity(url, byte[].class);
+
+    // 접근 오류 발생시 오류 throw
+    if(res.toString().contains("X-Frame-Options:\"DENY\"")){
+        
+    }
+
+    byte[] buffer = res.getBody();
+
+    // 로컬 서버에 저장
+    String fileName = UUID.randomUUID().toString();                    // 파일명 (랜덤생성)
+    String ext      = ".zip"; // 파일을 확장자를 추출, 나는 zip 파일만 사용하기 때문에 하드코딩으로 넣었다.
+    Path target   = Paths.get("", fileName + ext);    // 파일 저장 경로
+
+    try {
+        FileCopyUtils.copy(buffer, target.toFile());
+
+        Files.delete(target);
+
+
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
+
+public String fileUrlToDownloadUrl(String imageUrls) {
+    String[] splitLink = imageUrls.split("/");
+
+    // 이 부분은 파일의 ID를 추출하는 부분이므로 파일에 따라 인덱스가 다를 수 있습니다.
+    String fileId = splitLink[splitLink.length-1].contains("view") ? splitLink[splitLink.length-2]:splitLink[splitLink.length-1];
+    return "https://docs.google.com/u/0/uc?export=download&confirm=t&id=" + fileId;
+}
+```
+
+
 
 
 
