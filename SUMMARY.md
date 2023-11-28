@@ -12,6 +12,7 @@
   * [들어가기 앞서](book/undefined/undefined.md)
   * [💵 1부 화폐 예제](book/undefined/1/README.md)
     * [1장 다중 통화를 지원하는 Money 객체](book/undefined/1/1-money.md)
+    * [2장 타락한 객체](book/undefined/1/2.md)
 
 ## Study
 
