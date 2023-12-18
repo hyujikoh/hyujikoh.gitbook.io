@@ -14,6 +14,7 @@
     * [1장 다중 통화를 지원하는 Money 객체](book/undefined/1/1-money.md)
     * [2장 타락한 객체](book/undefined/1/2.md)
     * [3장 모두를 위한 평등](book/undefined/1/3.md)
+    * [4장 프라이버시](book/undefined/1/4.md)
 
 ## Study
 
