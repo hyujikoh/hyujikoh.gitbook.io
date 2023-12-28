@@ -8,7 +8,7 @@
 
 1. equals는 객체의 주소를 비교 하는 메소드이다. 하지만 다르게 사용 가능하다.
 2. hashCode는 객체의 메모리 주소를 이용해서 정수값 리턴한다.
-3. 이 2개를 재정의 해서 객체의 활용도를 높일수 있다.
+3. equals와 hashCode를 재정의 해서 객체의 활용도를 높일수 있다.
 
 > 클래스를 선언할 때 extends 키워드로 다른 클래스를 상속하지 않으면 암시적으로 java.lang.Object 클래스를 상속하게 된다. 자바의 모든 클래스는 Object 의 자식이거나 자손 클래스이다
 
@@ -34,7 +34,7 @@ Object의 equals() 메소드는 객체의 번지를 비교하고 boolean 값을 
 
 
 
-```
+```java
 @Test
 public void test1(){
     Object obj1 = new Object();
@@ -47,7 +47,7 @@ public void test1(){
 
 <div align="left">
 
-<figure><img src="../../.gitbook/assets/image (2) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (2) (1).png" alt=""><figcaption></figcaption></figure>
 
 </div>
 
@@ -57,7 +57,7 @@ public void test1(){
 
 String 같은 경우엔 equals 메소드를 재정의 해서 내부 문자열이 같은지 비교를 한다.&#x20;
 
-```
+```java
 //Object의 equals 메소드
 public boolean equals(Object obj) {
         return (this == obj);
@@ -93,7 +93,7 @@ Object 클래스의 hashCode() 메소드는 객체의 메모리 번지를 이용
 
 결국엔 hashCode() 메소드의 용도는 equals() 메소드와 동일한 맥락이다. 즉 두 객체가 동등한지 비교할때 주로 사용하다.
 
-```
+```java
 public int hashCode()
 ```
 
@@ -104,7 +104,7 @@ public int hashCode()
 이를 잘 활용하는 것이 Collections 의 `HashSet` 이다.\
 `HashSet` 은 동등 객체를 저장하지 않는 특성을 가지는데, 이때 hashCode() 랑 equals() 메소드를 이용해서 동등 객체여부를 판단한다.&#x20;
 
-```
+```java
 @Test
 public void test3(){
     HashSet<Member> hashSet = new HashSet();
@@ -146,7 +146,7 @@ public class Member{
 
 그러면 이번엔 hashCode() equals() 메소드를 재정의 해서 사용해보자
 
-```
+```java
 @Test
 public void test4(){
     HashSet<MemberA> hashSet = new HashSet();
@@ -202,4 +202,4 @@ public class MemberA{
 
 
 테스트 결과 객체의 내부값과, hashCode 재정의를 통해 동일한 값을 가진경우로 처리 되었다.\
-![](<../../.gitbook/assets/image (1) (1).png>)
+![](<../../../.gitbook/assets/image (1) (1) (1).png>)

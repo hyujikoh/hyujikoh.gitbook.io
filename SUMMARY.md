@@ -23,8 +23,10 @@
     * [UnHandled Exception org.springframework.http.converter.HttpMessageConversionException](study/error/java-spring/unhandled-exception-org.springframework.http.converter.httpmessageconversionexception.md)
     * [UnexpectedRollbackException](study/error/java-spring/unexpectedrollbackexception.md)
 * [☕ Java](study/java/README.md)
-  * [equals , hashCode 란?](study/java/equals-hashcode.md)
   * [Java 구글 드라이브 파일 링크를 통해 파일 다운로드](study/java/java.md)
+  * [개념](study/java/undefined/README.md)
+    * [equals , hashCode 란?](study/java/undefined/equals-hashcode.md)
+    * [record 란?](study/java/undefined/record.md)
 
 ## Use Cases
 
