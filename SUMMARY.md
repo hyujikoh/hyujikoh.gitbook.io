@@ -32,6 +32,6 @@
 
 * [🖥 For Developers](use-cases/for-developers.md)
 
-## html
+***
 
-* [Page 1](html/page-1.md)
+* [google24c8069b6d5e4e3e](google24c8069b6d5e4e3e.md)
