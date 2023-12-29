@@ -1,7 +1,6 @@
 # Table of contents
 
-* [html](README.md)
-* [🤔 Intro](<README (1).md>)
+* [🤔 Intro](README.md)
 
 ## Overview
 
@@ -32,3 +31,7 @@
 ## Use Cases
 
 * [🖥 For Developers](use-cases/for-developers.md)
+
+## html
+
+* [Page 1](html/page-1.md)
