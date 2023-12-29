@@ -8,9 +8,6 @@
         "intopic-toc"
     ],
     "pluginsConfig": {
-        "ga": {
-            "token": "UA-158722802-1"
-        },
         "sitemap": {
             "hostname": "https://hyujikoh-blog.gitbook.io/blog/"
         }
