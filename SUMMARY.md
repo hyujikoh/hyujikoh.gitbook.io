@@ -31,7 +31,3 @@
 ## Use Cases
 
 * [🖥 For Developers](use-cases/for-developers.md)
-
-***
-
-* [google24c8069b6d5e4e3e](google24c8069b6d5e4e3e.md)
