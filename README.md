@@ -13,4 +13,4 @@
 
 #### Github : [https://github.com/hyujikoh](https://github.com/hyujikoh)
 
-#### Email : [https://hyujikoh-history.gitbook.io](https://hyujikoh-history.gitbook.io)
+#### Blog : [https://hyujikoh-history.gitbook.io](https://hyujikoh-history.gitbook.io)
