@@ -1,15 +1,10 @@
 {
     "plugins": [
-        "ga",
-        "sitemap",
-        "folding-chapters",
-        "back-to-top-button",
-        "copy-code-button",
-        "intopic-toc"
+        "sitemap"
     ],
     "pluginsConfig": {
         "sitemap": {
-            "hostname": "https://hyujikoh-blog.gitbook.io/blog/"
+            "hostname": "https://hyujikoh-blog.gitbook.io/blog"
         }
     }
 }
