@@ -8,13 +8,14 @@
 
 ## book
 
-* [🚦 테스트 주도 개발](book/undefined/README.md)
-  * [들어가기 앞서](book/undefined/undefined.md)
-  * [💵 1부 화폐 예제](book/undefined/1/README.md)
-    * [1장 다중 통화를 지원하는 Money 객체](book/undefined/1/1-money.md)
-    * [2장 타락한 객체](book/undefined/1/2.md)
-    * [3장 모두를 위한 평등](book/undefined/1/3.md)
-    * [4장 프라이버시](book/undefined/1/4.md)
+* [🚦 테스트 주도 개발](book/tdd/README.md)
+  * [들어가기 앞서](book/tdd/undefined.md)
+  * [💵 1부 화폐 예제](book/tdd/1/README.md)
+    * [1장 다중 통화를 지원하는 Money 객체](book/tdd/1/1-money.md)
+    * [2장 타락한 객체](book/tdd/1/2.md)
+    * [3장 모두를 위한 평등](book/tdd/1/3.md)
+    * [4장 프라이버시](book/tdd/1/4.md)
+    * [5장 솔직히말하자면](book/tdd/1/5.md)
 
 ## Study
 
