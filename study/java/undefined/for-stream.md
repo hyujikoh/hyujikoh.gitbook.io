@@ -62,7 +62,7 @@ list 의 길이를 `10000` 으로 했을때 다음과 같은 결과가 나온다
 
 <div align="left">
 
-<figure><img src="../../../.gitbook/assets/image.png" alt=""><figcaption><p>list size가 <code>10000</code> 일때 각각 테스트 결과</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (2).png" alt=""><figcaption><p>list size가 <code>10000</code> 일때 각각 테스트 결과</p></figcaption></figure>
 
 </div>
 
@@ -70,7 +70,7 @@ list 의 길이를 `10000000` 으로 했을때는 성능 결과는 다음과 같
 
 <div align="left">
 
-<figure><img src="../../../.gitbook/assets/image (1).png" alt=""><figcaption><p>list size가 <code>10000000</code> 일때 각각 테스트 결과</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (1) (1).png" alt=""><figcaption><p>list size가 <code>10000000</code> 일때 각각 테스트 결과</p></figcaption></figure>
 
 </div>
 

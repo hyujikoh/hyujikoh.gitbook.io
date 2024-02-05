@@ -146,7 +146,7 @@ public class Dollar {
 }
 ```
 
-<figure><img src="../../../.gitbook/assets/image (2) (1).png" alt=""><figcaption><p>멋지게 통과했다.</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (2) (1) (1).png" alt=""><figcaption><p>멋지게 통과했다.</p></figcaption></figure>
 
 이렇게 만든 테스트는 야매로 통과 되었으니까 테스트 코드를 정석대로 중복을 제거해보자. 초기에  필드`amount` 를 10 으로  선언한것은 `5*2` 가 빠르게 머리속에 스쳐지나갔으니까 사용한 메서드 `times` 를 이용해보자.&#x20;
 
