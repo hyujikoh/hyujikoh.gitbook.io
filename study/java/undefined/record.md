@@ -124,7 +124,17 @@ record RecordBook(int id, String name){
 
 </div>
 
-/참고 자료
+
+
+#### record 의 불편함..?
+
+레코드를 사용하고 나서 코드를 간편하게 줄일수 있고, 직관적으로 작성할 수 있었지만, 반대로 단점도 있었다.&#x20;
+
+1. setter 가 없고, 아예 수정이 불가능하다.
+
+특정 api 에서 운영환경(dev, prod, test 등)에 따라 url 경로를 수정해야 했다. 당연히 dto 를 가공하면 된다라고 생각했는데, 안되는 거였다... 왜 안되는지 찾아보니 각각의 인스턴스 멤버변수들은 final 선언이 자동으로 되어있던 것이다. 각각의 멤버변수들을 수정한다는것 자체가 불가능한것이였다. 따라서 이와 같은 기능을 수행하기 위해서 record 로 된 dto 를 클래스 형태로 수정을 하였다.&#x20;
+
+#### 참고 자료
 
 [https://openjdk.org/jeps/359](https://openjdk.org/jeps/359)(java record info)
 
