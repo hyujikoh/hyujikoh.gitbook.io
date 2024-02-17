@@ -70,7 +70,7 @@ list 의 길이를 `10000000` 으로 했을때는 성능 결과는 다음과 같
 
 <div align="left">
 
-<figure><img src="../../../.gitbook/assets/image (1) (1) (1) (1).png" alt=""><figcaption><p>list size가 <code>10000000</code> 일때 각각 테스트 결과</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (1) (1) (1) (1) (1).png" alt=""><figcaption><p>list size가 <code>10000000</code> 일때 각각 테스트 결과</p></figcaption></figure>
 
 </div>
 
@@ -131,3 +131,37 @@ for 문과 Iterator는 컬렉션의 요소를 컬렉션 바깥쪽으로 가져�
 해당 파이프라인을 코드로 표현한게 위에 작성한 테스트 코드이다. 오로지 스트림 내장 메소드를 이용해 람다식으로 보다 간편하게 작성된 코드이다. 중간 처리와 상관없이, 가장 중요한것은 최종 처리를 해야한다는 것이다.
 
 ### 그러면 왜 앞선 테스트에서는 for 문이 성능이 더 좋게 나올까?
+
+앞서 작성된 테스트 코드에서 는 원시 타입을 기준으로 테스트를 작성하였는데, 반대로 참조 타입을 통해서 테스트 성능을 측정해보겠다.
+
+```java
+@Test
+public void forTest_ver2(){
+    Long beforeTime = System.nanoTime(); //코드 실행 전에 시간 받아오기
+    Long sum = 0L;
+    for (Long i:
+            data) {
+        sum+=i;
+    }
+    Long afterTime = System.nanoTime(); // 코드 실행 후에 시간 받아오기
+    Long secDiffTime = afterTime - beforeTime; //두 시간에 차 계산
+    System.out.println("테스트 A 시간차이(m) : "+secDiffTime);
+}
+
+@Test
+public void forStream_ver2(){
+    Long beforeTime = System.nanoTime(); //코드 실행 전에 시간 받아오기
+    Long sum = data.stream().mapToLong(
+            s -> s
+    ).sum();
+    Long afterTime = System.nanoTime(); // 코드 실행 후에 시간 받아오기
+
+    Long secDiffTime = afterTime - beforeTime; //두 시간에 차 계산
+    System.out.println("테스트 B 시간차이(m) : "+secDiffTime);
+}
+```
+
+테스트 결과는 다음과 같이 나온다!\
+![](../../../.gitbook/assets/image.png)
+
+이전 테스트 에서 분명 성능이 더 좋았던 for-loop 가 변수 타입을 참조 타입으로 변경했을뿐인데, 성능이 역전이 되어버린것이었다.
