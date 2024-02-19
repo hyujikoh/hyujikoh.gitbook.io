@@ -18,11 +18,15 @@ description: for 문과 Stream 의 각기 장단점에 대해 이해하기 위�
 
 ***
 
+## 본문
+
 ### 고정 관념을 부수기 위한 성능테스트
 
 테스트 하기전 나는 Stream API(이하 스트림)가 for 문보다 엄청나게 성능이 좋고 코드를 간결하게 만들어 주는 기능이라고 생각을 하였다.&#x20;
 
 실제로 맞는 내용인지 간단한 테스트 코드를 통해 성능 측정을 하였다.
+
+#### 첫번째 테스트 코드
 
 ```java
 public class apiTest {
@@ -134,6 +138,8 @@ for 문과 Iterator는 컬렉션의 요소를 컬렉션 바깥쪽으로 가져�
 
 앞서 작성된 테스트 코드에서 는 원시 타입을 기준으로 테스트를 작성하였는데, 반대로 참조 타입을 통해서 테스트 성능을 측정해보겠다.
 
+#### 두번째 테스트
+
 ```java
 @Test
 public void forTest_ver2(){
@@ -164,4 +170,98 @@ public void forStream_ver2(){
 테스트 결과는 다음과 같이 나온다!\
 ![](../../../.gitbook/assets/image.png)
 
-이전 테스트 에서 분명 성능이 더 좋았던 for-loop 가 변수 타입을 참조 타입으로 변경했을뿐인데, 성능이 역전이 되어버린것이었다.
+이전 테스트 에서 분명 성능이 더 좋았던 for-loop 가 변수 타입을 참조 타입으로 변경했을뿐인데, 이전 결과가 역전이 되어버린것이었다.
+
+다음은 JVM 의 대략적은 구조를 설명하는 자료이다.&#x20;
+
+<figure><img src="../../../.gitbook/assets/image (13).png" alt=""><figcaption><p>출처 : <a href="https://www.devkuma.com/docs/jvm/memory-structure/">https://www.devkuma.com/docs/jvm/memory-structure/</a></p></figcaption></figure>
+
+[첫번째 테스트 코드](for-stream.md#undefined-2)에서 int 형 자료형은 원시타입이기 때문에 JVM 에서 스택영역으로 저장이 되어서 메모리에 직접 참조를 통해 값이 저장이 되어진다.&#x20;
+
+반대로 [두번째 테스트 코드](for-stream.md#undefined-7)에서는 자료형이 참조타입으로 저장되어 Heap 영역에 저장이 되어진다. 이때 값을 가져올때 간접 참조, 간접적으로 주소를 이용해 값을 가져와야한다.&#x20;
+
+값을 직접적으로 참조하는 것보다. 주소 참조를 통해 값을 가져오는 비용이 더 들기 때문에, 앞선 테스트에서 보여준 for 문 성능이점이 없어지게 된것이다. (이를 순회비용이 간접 참조일때 더 많이 발생한다는 것으로 표현된다.)
+
+### 순회 비용과 계산비용
+
+앞선 테스트에서 순회 비용이 계산비용과 비교해서 상대적으로 비용이 높았다는 결론이 나왔다. 그렇다면 만일 순회 비용에 비해서  압도적으로 계산 비용이 높았을 경우엔 어떤 결과가 나올까?
+
+참고한 자료와 마찬가지로 apache 의 sin 함수를 통해 성능계산을 해보기로 했다.
+
+```java
+@Test
+public void cal_cost_test(){
+    Long beforeTime = System.nanoTime(); //코드 실행 전에 시간 받아오기
+
+    // 배열을 이용한 for-loop 테스트
+    for (int i = 0; i < ints.length; i++) {
+        double d = FastMath.sin(ints[i]);
+        if (d > m) m = d;
+    }
+
+    Long afterTime = System.nanoTime(); // 코드 실행 후에 시간 받아오기
+    Long secDiffTime = afterTime - beforeTime; //두 시간에 차 계산
+    System.out.println("배열을 이용한 for-loop 테스트 시간 "+secDiffTime);
+
+
+    // 배열을 이용한 sequential stream 테스트
+    beforeTime =  System.nanoTime();
+    double maxFromArrayStream = Arrays.stream(ints)
+            .mapToDouble(FastMath::sin)
+            .reduce(Double.MIN_VALUE, Math::max);
+
+    afterTime = System.nanoTime(); // 코드 실행 후에 시간 받아오기
+    secDiffTime = afterTime - beforeTime; //두 시간에 차 계산
+
+    System.out.println("배열을 이용한 sequential stream 테스트 시간  : "+secDiffTime);
+
+    // arrayList 테스트를 위한 사전 초기화
+    m = Double.MIN_VALUE;
+
+    // ArrayList를 이용한 for-loop 테스트
+    beforeTime =  System.nanoTime();
+
+    for (int i = 0; i < arrayList.size(); i++) {
+        double d = FastMath.sin(arrayList.get(i));
+        if (d > m) m = d;
+    }
+    afterTime = System.nanoTime(); // 코드 실행 후에 시간 받아오기
+    secDiffTime = afterTime - beforeTime; //두 시간에 차 계산
+
+    System.out.println("ArrayList를 이용한 for-loop 테스트 시간  : "+secDiffTime);
+
+
+
+    // ArrayList를 이용한 sequential stream 테스트
+    beforeTime =  System.nanoTime();
+    double maxFromArrayListStream = arrayList.stream()
+            .mapToDouble(FastMath::sin)
+            .reduce(Double.MIN_VALUE, Math::max);
+    afterTime = System.nanoTime(); // 코드 실행 후에 시간 받아오기
+    secDiffTime = afterTime - beforeTime; //두 시간에 차 계산
+
+    System.out.println("ArrayList를 이용한 sequential stream 테스트 시간  : "+secDiffTime);
+}
+```
+
+이를 측정한 성능 결과는 다음과 같다.
+
+<div align="left">
+
+<figure><img src="../../../.gitbook/assets/image (14).png" alt=""><figcaption></figcaption></figure>
+
+</div>
+
+다음과 같이 계산비용이 높은 테스트에서 for 문이 더이상 성능에 우수함을 나타내지 않는 결과를 확인 할 수 있게 됐다. 즉 내부의 함수 계산 비용과 순회비용을 합친 경우에 해당 테스트는 stream 으로 구현하여도 성능 저하가 나타나지 않는다는 것이다.
+
+
+
+
+
+## 참고 자료
+
+{% embed url="https://www.devkuma.com/docs/jvm/memory-structure/" fullWidth="false" %}
+
+{% embed url="https://sigridjin.medium.com/java-stream-api%EB%8A%94-%EC%99%9C-for-loop%EB%B3%B4%EB%8B%A4-%EB%8A%90%EB%A6%B4%EA%B9%8C-50dec4b9974b" %}
+
+{% embed url="https://jaxlondon.com/wp-content/uploads/2015/10/The-Performance-Model-of-Streams-in-Java-8-Angelika-Langer-1.pdf" %}
