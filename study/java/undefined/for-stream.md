@@ -252,11 +252,11 @@ public void cal_cost_test(){
 
 </div>
 
-다음과 같이 계산비용이 높은 테스트에서 for 문이 더이상 성능에 우수함을 나타내지 않는 결과를 확인 할 수 있게 됐다. 즉 내부의 함수 계산 비용과 순회비용을 합친 경우에 해당 테스트는 stream 으로 구현하여도 성능 저하가 나타나지 않는다는 것이다.
+다음과 같이 계산비용이 높은 테스트에서 for 문이 더이상 성능에 우수함을 나타내지 않는 결과를 확인 할 수 있게 됐다. 즉 내부의 함수 계산 비용과 순회비용을 합친 경우를 고려하여도 stream 으로 구현하여도 성능 저하가 나타나지 않는다는 것이다.
 
+## 마무리 및 느낀점
 
-
-
+> 지금껏 for 문과 stream 에 대해서 막 사용을 하였고, 어느 부분에서 성능에 이점이 나타나는지 모르는 상태에서 개발에 임했던것 같다. 이 글을 작성하는 기간동안 여러 포스팅을 보고, 관련 서적을 보면서 내가 사용하는 언어에 대해서 좀더 한발짝 알아가는 계기가 되었던것 같고, 어느 상황에 보다 최적의 성능을 낼수있도록 의사결정을 내릴수 있는 개발자로 성장했으면 싶다.
 
 ## 참고 자료
 
@@ -265,3 +265,5 @@ public void cal_cost_test(){
 {% embed url="https://sigridjin.medium.com/java-stream-api%EB%8A%94-%EC%99%9C-for-loop%EB%B3%B4%EB%8B%A4-%EB%8A%90%EB%A6%B4%EA%B9%8C-50dec4b9974b" %}
 
 {% embed url="https://jaxlondon.com/wp-content/uploads/2015/10/The-Performance-Model-of-Streams-in-Java-8-Angelika-Langer-1.pdf" %}
+
+## 🦔
