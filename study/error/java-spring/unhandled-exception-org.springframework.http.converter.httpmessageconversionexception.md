@@ -5,12 +5,12 @@ description: >-
   definition error 해결
 ---
 
-# UnHandled Exception org.springframework.http.converter.HttpMessageConversionException
+# HttpMessageConversionException 오류 해결
 
 문제 \
 UnHandled Exception org.springframework.http.converter.HttpMessageConversionException: Type definition error 가 발생 했다.
 
-```
+```java
 23:17:33.213 ERROR [File:ExceptionAdvice.java] [Func:ExceptionHandle] [Line:123] - UnHandled Exception
 org.springframework.http.converter.HttpMessageConversionException: Type definition error: [simple type, class com.XXX.ErrorDTO]
 	at org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.writeInternal(AbstractJackson2HttpMessageConverter.java:489)
