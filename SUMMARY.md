@@ -20,6 +20,7 @@
     * [7장 사과와 오렌지](book/tdd/1/7.md)
     * [8장 객체 만들기](book/tdd/1/8.md)
     * [9장 우리가 사는 시간](book/tdd/1/9.md)
+    * [10장 흥미로운 시간](book/tdd/1/10.md)
 
 ## Study
 
@@ -38,4 +39,4 @@
 
 ## Use Cases
 
-* [🖥 For Developers](use-cases/for-developers.md)
+* [🖥️ For Developers](use-cases/for-developers.md)
