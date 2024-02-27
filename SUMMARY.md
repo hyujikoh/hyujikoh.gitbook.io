@@ -34,7 +34,6 @@
   * [개념](study/java/undefined/README.md)
     * [equals , hashCode 란?](study/java/undefined/equals-hashcode.md)
     * [record 란?](study/java/undefined/record.md)
-    * [접근 제어자 란?](study/java/undefined/undefined.md)
     * [for문과 Stream의 성능](study/java/undefined/for-stream.md)
 
 ## Use Cases
