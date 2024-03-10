@@ -27,7 +27,7 @@
 
 테스트를 하면 당연히 실패를 한다.
 
-```
+```java
 @Test
 public void fileTest(){
     String googleFileUrl = "https://drive.google.com/file/d/1HSrfZhvIHgdizKVnji8D7gJqT8n3ApGe/view";
@@ -42,7 +42,7 @@ public void fileTest(){
 
 파일은 각각의 id 값을 가지고 경로를 구성하고 있다. 패턴은 거의 일치 하니까 `/` 로 문자열을 분리 해보겠다. 그 안에서 `drive.google.com` 가 있는지 테스트 해보자
 
-```
+```java
 @Test
 public void fileTest(){
     String googleFileUrl = "https://drive.google.com/file/d/1HSrfZhvIHgdizKVnji8D7gJqT8n3ApGe/view";
@@ -71,7 +71,7 @@ public void fileTest(){
 
 상식적으로 파일이 정상적으로 접근이 가능하면 아무래도 응답 코드는 `200` 이 나올것이다. 그렇지 않을 경우엔 접근 권한 오류인 `403` 에러가 나올것이다.([참고](https://developer.mozilla.org/ko/docs/Web/HTTP/Status/403)) 이 부분에 대해서 한번 테스트코드를 만들어보자.&#x20;
 
-```
+```java
 @Test
 public void fileAccessIsOk(){
     String googleFileUrl = "https://drive.google.com/file/d/1HSrfZhvIHgdizKVnji8D7gJqT8n3ApGe/view";
@@ -89,7 +89,7 @@ public void fileAccessIsOk(){
 
 1. build.gradle `implementation` 추가
 
-```
+```java
  // build.gradle 에서 다음과 같이 추가
  dependencies {
   implementation('org.springframework.boot:spring-boot-starter-web')
@@ -100,7 +100,7 @@ public void fileAccessIsOk(){
 
 2. 테스트 코드에 다음과 같이 `RestTemplate` 을 이용한 요청 코드 작성
 
-```
+```java
 @Test
 public void fileAccessIsOk(){
     String googleFileUrl = "https://drive.google.com/file/d/1HSrfZhvIHgdizKVnji8D7gJqT8n3ApGe/view";
@@ -143,7 +143,7 @@ public void fileAccessIsOk(){
 
 이 파일 URL 을 테스트코드를 작성하여 결과값을 403 으로 예상해보자
 
-```
+```java
 @Test
 public void fileAccessIs404(){
     String privateFileUrl = "https://drive.google.com/drive/folders/13X0o5nwn6AQZrIKH1RDODQsfLOs9Zvu4";
@@ -223,7 +223,7 @@ public void fileAccessIs404(){
 지금 서비스 로직을 변경 하여 충분히 구현을 할수 있지만, 이건 추후 리팩토링을 통해 구현할 것이다. \
 우선은 해당 res 의 `X-Frame-Options` 여부를 체크하여 URL 접근 여부를 확인하자
 
-```
+```java
 @Test
 public void fileAccessIs403(){
     String privateFileUrl = "https://drive.google.com/drive/folders/13X0o5nwn6AQZrIKH1RDODQsfLOs9Zvu4";
