@@ -38,12 +38,14 @@
 
 그러니까 Java 로 풀이를 하면 이렇게 표현할 수 있을거 같다.&#x20;
 
-```
+```java
+// Operation.java
+
 public interface Operation {
     void operationA();
 }
 
-
+// OperationA.java
 public class OperationA implements Operation{
     @Override
     public void operationA() {
@@ -52,6 +54,7 @@ public class OperationA implements Operation{
 }
 
 
+// OperationB.java
 public class OperationB implements Operation{
     @Override
     public void operationA() {
@@ -67,7 +70,7 @@ public class OperationB implements Operation{
 
 다시 화폐로 넘어가서 곱셈에 대해 테스트  코드를 적어보자
 
-```
+```java
 @Test
 public void testMul(){
         Dollar five = new Dollar(5);
@@ -84,40 +87,41 @@ public void testMul(){
 * [ ] Dollar 부작용
 * [ ] Money 반올림(int 연산자로 세세한 환율을 계산하면 지옥간다. )
 
-우선 이 테스트에 대해서 없는것들이 너무 많다. 우선 Dollar 클래스도 없는데 Dollar 를 선언 하다니... 바로 클래스 부터 만들어 보자
+우선 이 테스트에 대해서 없는것들이 너무 많다. 우선 Dollar 클래스도 없는데 Dollar 를 선언 하니 에러가 발생하였다. 바로 클래스 부터 만들어 보자
 
-```
+```java
+//Dollar.java
 public class Dollar {
 }
 ```
 
 클래스 생성 에러가 하나 없어졌으니 다음은 클래스에 대한 int 매개변수를 받는 생성자를 만들어보자
 
-```
-public class Dollar {
+<pre class="language-java"><code class="lang-java"><strong>//Dollar.java
+</strong>public class Dollar {
     Dollar(int amount){
         
     }
 }
-```
+</code></pre>
 
 생성자 에러를 제거 하였으니 다음은 메서드에 대해서 최소한 통과가 되게 만들어보자.
 
-```
+```java
+//Dollar.java
 public class Dollar {
     Dollar(int amount){
-
     }
     
-    void times (int mul){
-        
+    void times (int mul){ 
     }
 }
 ```
 
 메서드도 만들었으니 이제는 amount 필드를 만들자
 
-```
+```java
+//Dollar.java
 public class Dollar {
     int amount;
     Dollar(int amount){
@@ -133,7 +137,8 @@ public class Dollar {
 
 우선적으로 테스트가 돌아가게 만든 이 케이스를 실행시키면 아마 실패됐다고 나올것이다. 이제는 이 테스트를 빠르게 통과하는 코드를 만들어보자.
 
-```
+```java
+//Dollar.java
 public class Dollar {
     int amount=10;
     Dollar(int amount){
@@ -150,7 +155,8 @@ public class Dollar {
 
 이렇게 만든 테스트는 야매로 통과 되었으니까 테스트 코드를 정석대로 중복을 제거해보자. 초기에  필드`amount` 를 10 으로  선언한것은 `5*2` 가 빠르게 머리속에 스쳐지나갔으니까 사용한 메서드 `times` 를 이용해보자.&#x20;
 
-<pre><code><strong>public class Dollar {
+<pre class="language-java"><code class="lang-java">//Dollar.java
+<strong>public class Dollar {
 </strong>    int amount;
     Dollar(int amount){
 
@@ -164,7 +170,8 @@ public class Dollar {
 
 다시 코드를 리팩토링을 해보자!
 
-```
+```java
+//Dollar.java
 public class Dollar {
     int amount;
     Dollar(int amount){
