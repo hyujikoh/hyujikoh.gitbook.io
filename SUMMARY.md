@@ -38,7 +38,7 @@
     * [equals , hashCode 란?](study/java/undefined/equals-hashcode.md)
     * [record 란?](study/java/undefined/record.md)
     * [for문과 Stream의 성능](study/java/undefined/for-stream.md)
-* [Page](study/page.md)
+    * [Map의 성능 차이](study/java/undefined/map.md)
 
 ## Use Cases
 
