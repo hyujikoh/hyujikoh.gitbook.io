@@ -25,7 +25,7 @@ Map Interface는 Key 와 Value 를 연결하여 객체를 Mapping 하는 구조�
 | Thread-satety   | X                                                    | O                                                                                |
 | Synchronization | X                                                    | O                                                                                |
 | K/V null 허용     | O                                                    | X                                                                                |
-| 성능              | 단일 스레드 환경에서는 HashMap 이 성능 우수                         | 동기화를 진행 성능저하가 발생                                                                 |
+| 성능              | 단일 스레드 환경에서는 HashMap 이 성능 우수                         | 동기화를 진행하기 때문에 성능저하가 발생                                                           |
 | iteration       | fail-fast; 즉, 반복중에 HashMap 이 구조적으로 수정되면 exception 발생 | <p>Enumerator와 Iteration 둘다 사용 가능함. </p><p>Enumerator 는 Fail-safe 이지만, 구식이다.</p> |
 | Inheritance     | AbstractMap class 상속                                 | Dictionary class 상속                                                              |
 | Legacy          | 1.2                                                  | 1.0                                                                              |
@@ -72,4 +72,3 @@ private static void testHashtable(int operations) {
 
 * JAVA Map Docs from \
   [https://docs.oracle.com/javase/8/docs/api/index.html](https://docs.oracle.com/javase/8/docs/api/index.html)&#x20;
-*
