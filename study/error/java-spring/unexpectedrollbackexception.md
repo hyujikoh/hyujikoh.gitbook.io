@@ -4,13 +4,13 @@ description: >-
   Transaction silently rolled back because it has been marked as rollback-only
 ---
 
-# UnexpectedRollbackException
+# UnexpectedRollbackException 오류 해결
 
 문제&#x20;
 
 JPA 를 통해 데이터를 생성 API 를 진행하는 도중에 아래와 같은 에러가 발생하였다.&#x20;
 
-<figure><img src="../../../.gitbook/assets/image (3).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (3) (1).png" alt=""><figcaption></figcaption></figure>
 
 지금 까지 CRUD 작업을 하면서 rollback 관련한 이슈가 나온건 처음이었다.&#x20;
 
