@@ -1,2 +1,0 @@
-# Current Wrting Post
-

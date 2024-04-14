@@ -40,10 +40,4 @@
     * [equals , hashCode 란?](study/java/undefined/equals-hashcode.md)
     * [record 란?](study/java/undefined/record.md)
     * [for문과 Stream의 성능](study/java/undefined/for-stream.md)
-    * [Map의 성능 차이](study/java/undefined/map.md)
-
-## Use Cases
-
-* [🖥️ For Developers](use-cases/for-developers.md)
-* [Current Wrting Post](use-cases/current-wrting-post/README.md)
-  * [12장 드디어, 더하기](use-cases/current-wrting-post/12.md)
+    * [Map의 특성 및 성능](study/java/undefined/map.md)
