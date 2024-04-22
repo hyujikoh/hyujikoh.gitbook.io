@@ -41,3 +41,4 @@
     * [record 란?](study/java/undefined/record.md)
     * [for문과 Stream의 성능](study/java/undefined/for-stream.md)
     * [Map의 특성 및 성능](study/java/undefined/map.md)
+    * [StringBuilder, StringBuffer, String 특성](study/java/undefined/stringbuilder-stringbuffer-string.md)
