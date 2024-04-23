@@ -1,10 +1,14 @@
 {
     "plugins": [
-        "sitemap"
+        "sitemap", "ga"
     ],
     "pluginsConfig": {
         "sitemap": {
             "hostname": "https://hyujikoh-blog.gitbook.io/blog"
-        }
+        },
+		
+		"ga": {
+			"token": "G-SCFT0X8HV3"
+		}
     }
 }
