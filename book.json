@@ -6,9 +6,8 @@
         "sitemap": {
             "hostname": "https://hyujikoh-blog.gitbook.io/blog"
         },
-		
 		"ga": {
-			"token": "G-SCFT0X8HV3"
+			"token": "GTM-W82884W7"
 		}
     }
 }
