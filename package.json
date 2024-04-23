@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "gitbook-plugin-search": "^2.2.1",
     "gitbook-plugin-sitemap": "^1.2.0"
   }
 }
