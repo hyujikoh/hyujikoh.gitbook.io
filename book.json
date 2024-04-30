@@ -1,6 +1,6 @@
 {
     "plugins": [
-        "sitemap", "ga"
+        "sitemap", "ga", "gtm"
     ],
     "pluginsConfig": {
         "sitemap": {
@@ -8,6 +8,9 @@
         },
 		"ga": {
 			"token": "GTM-W82884W7"
-		}
+		},
+		"gtm": {
+            "token": "G-SCFT0X8HV3"
+        }
     }
 }
