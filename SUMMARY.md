@@ -28,6 +28,8 @@
 
 ## Study
 
+* [인증/인가](study/undefined/README.md)
+  * [JWT🎫](study/undefined/jwt.md)
 * [📍 Error 일지](study/error/README.md)
   * [Java Spring](study/error/java-spring/README.md)
     * [HttpMessageConversionException 오류 해결](study/error/java-spring/unhandled-exception-org.springframework.http.converter.httpmessageconversionexception.md)
