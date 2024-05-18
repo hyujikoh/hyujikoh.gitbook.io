@@ -39,9 +39,9 @@ RFC 자체는 인터넷과 관련된 다양한 기술, 프로토콜 절차등을
 
 실제 RFC 에서 관리되고 있는 목록을 보면 RFC 7519 의 status 는 `Proposed Standard` 표준으로 제안이 되어있는 상태고, `Best Current Practices` 는 RFC 8725 로 되어있다는것을 참고하면 좋을것 같다.
 
-<figure><img src="../../.gitbook/assets/image (29).png" alt=""><figcaption><p>RFC 8725</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (29).png" alt=""><figcaption><p>RFC 8725</p></figcaption></figure>
 
-<figure><img src="../../.gitbook/assets/image (30).png" alt=""><figcaption><p>RFC 7519</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (30).png" alt=""><figcaption><p>RFC 7519</p></figcaption></figure>
 
 
 

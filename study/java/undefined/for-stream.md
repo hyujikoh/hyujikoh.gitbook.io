@@ -68,7 +68,7 @@ list 의 길이를 `10000` 으로 했을때 다음과 같은 결과가 나온다
 
 <div align="left">
 
-<figure><img src="../../../.gitbook/assets/image (2) (1) (1) (1).png" alt=""><figcaption><p>list size가 <code>10000</code> 일때 각각 테스트 결과</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (2) (1) (1) (1) (1).png" alt=""><figcaption><p>list size가 <code>10000</code> 일때 각각 테스트 결과</p></figcaption></figure>
 
 </div>
 
@@ -76,7 +76,7 @@ list 의 길이를 `10000000` 으로 했을때는 성능 결과는 다음과 같
 
 <div align="left">
 
-<figure><img src="../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption><p>list size가 <code>10000000</code> 일때 각각 테스트 결과</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption><p>list size가 <code>10000000</code> 일때 각각 테스트 결과</p></figcaption></figure>
 
 </div>
 
@@ -132,6 +132,8 @@ for 문과 Iterator는 컬렉션의 요소를 컬렉션 바깥쪽으로 가져�
 
 파이프 라인을 도식화 하면 다음과 같이 설명될 수 있다.
 
+
+
 <img src="../../../.gitbook/assets/file.excalidraw (1).svg" alt="중간처리와 최종처리 파이프라인" class="gitbook-drawing">
 
 해당 파이프라인을 코드로 표현한게 위에 작성한 테스트 코드이다. 오로지 스트림 내장 메소드를 이용해 람다식으로 보다 간편하게 작성된 코드이다. 중간 처리와 상관없이, 가장 중요한것은 최종 처리를 해야한다는 것이다.
@@ -170,7 +172,7 @@ public void forStream_ver2(){
 ```
 
 테스트 결과는 다음과 같이 나온다!\
-![](<../../../.gitbook/assets/image (1) (1) (1).png>)
+![](<../../../.gitbook/assets/image (1) (1) (1) (1).png>)
 
 이전 테스트 에서 분명 성능이 더 좋았던 for-loop 가 변수 타입을 참조 타입으로 변경했을뿐인데, 이전 결과가 역전이 되어버린것이었다.
 
