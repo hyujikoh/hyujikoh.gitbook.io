@@ -66,9 +66,37 @@ JWT 의 구성은 간단하다. 특별하게 구성된 경우를 제외하고 `.
 
 #### Payload
 
+payload는 토큰에 담을 클레임(claim) 정보를 포함하고 있다. 페이로드에 담는 정보의 한 조각을 클레임이라 부르고 클레임은 엔티티에 관한 진술과 추가적인 데이터를 말한다. 이는 name/value 쌍으로 이루어지고 있다. 클레임은 registered claim, public claim, private claim 세 종류로 분류된다.
 
+* **Registered Claim** : 상호 운용 가능하고 필수는 아니지만 권장되는 미리 정의된 클레임 세트. 해당 클레임으로는 **iss** (issuer), **exp** (expiration time), **sub** (subject), **aud** (audience), **nbf**(Not Before), **iat** (Issued At) 이 있다.
+* **Public Claim** : JWT 를 사용하는 사람들이 마음대로 정의할 수 있는 클레임이다.&#x20;
+* **Private Claim** : 사용자 정의 클레임으로 사용에 동의하는 당사자 간 정보를 공유하기 위한 클레임
+
+페이로드는 다음과 같은 예시로 되어있다.
+
+```json
+{
+  "sub": "1234567890",
+  "name": "John Doe",
+  "admin": true
+}
+```
+
+{% hint style="warning" %}
+서명된 토큰과 같은 경우 변조로부터 보호되지만, 해당 정보는 누구나 읽을 수 있습니다. JWT 가 암호화되지 않은 한 비밀 정보를 페이로드나 헤어요소에 넣지 말아야한다.
+{% endhint %}
 
 #### Siginture&#x20;
+
+서명 부분을 생성할려면 인코딩된 헤더, 페이로드, 헤더에 지정된 알고리즘을 가져와 서명해야한다. 서명에는 secrect key 를 포함하여 암호화되어 있다. 서명은 메시지가 중간에 변경되지 않았는지 확인하는 데 사용되면, 개인 키로 서명된 토큰의 경우 JWT 발신자가 누구인지 확인이 가능하다.
+
+
+
+## 마무리
+
+이렇게 JWT 에 대해서 알아보는 POST 를 작성하였는데, JWT 를 활용하여 인증/인가를 구현한 간단한 프로젝트를 만듬으로써 보다 더 이해를하는 시간을 가져볼 것이다.
+
+
 
 ## 참고 레퍼런스 및 사이트
 
@@ -76,5 +104,6 @@ JWT 의 구성은 간단하다. 특별하게 구성된 경우를 제외하고 `.
   [https://www.rfc-editor.org/search/rfc\_search\_detail.php](https://www.rfc-editor.org/search/rfc\_search\_detail.php)
 * JWT INFO\
   [https://jwt.io](https://jwt.io/)
-* Collections.synchronizedMap vs. ConcurrentHashMap  from\
-  [https://www.baeldung.com/java-synchronizedmap-vs-concurrenthashmap](https://www.baeldung.com/java-synchronizedmap-vs-concurrenthashmap)
+*   JWT (JSON Web Token) 이해와 활용
+
+    [http://www.opennaru.com/opennaru-blog/jwt-json-web-token/](http://www.opennaru.com/opennaru-blog/jwt-json-web-token/)
