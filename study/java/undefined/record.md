@@ -120,7 +120,7 @@ record RecordBook(int id, String name){
 
 <div align="left">
 
-<figure><img src="../../../.gitbook/assets/image (2) (1) (1) (1) (1) (1).png" alt=""><figcaption><p>테스트 결과!</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (2) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption><p>테스트 결과!</p></figcaption></figure>
 
 </div>
 
