@@ -38,13 +38,18 @@
 
 그러니까 Java 로 풀이를 하면 이렇게 표현할 수 있을거 같다.&#x20;
 
+{% tabs %}
+{% tab title="Operation.java" %}
 ```java
 // Operation.java
-
 public interface Operation {
     void operationA();
 }
+```
+{% endtab %}
 
+{% tab title="OperationA.java" %}
+```java
 // OperationA.java
 public class OperationA implements Operation{
     @Override
@@ -52,8 +57,11 @@ public class OperationA implements Operation{
 
     }
 }
+```
+{% endtab %}
 
-
+{% tab title="OperationB.java" %}
+```java
 // OperationB.java
 public class OperationB implements Operation{
     @Override
@@ -61,8 +69,9 @@ public class OperationB implements Operation{
 
     }
 }
-
 ```
+{% endtab %}
+{% endtabs %}
 
 위 와 같은 코드로 설명하면 `Operation` 이라는 인터페이스는 여러 메소드를 가지고 있다.
 
@@ -163,7 +172,7 @@ public class Dollar {
     }
 
     void times (int mul){
-        amount = 5*mul;
+        amount = 5 * mul;
     }
 }
 </code></pre>
