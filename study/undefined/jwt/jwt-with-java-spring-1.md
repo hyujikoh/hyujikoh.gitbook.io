@@ -62,7 +62,7 @@ public class JwtTest {
 
 이렇게 수행을할 경우 빌드도 문제없이 되고 초록색 막대가 보이도록 통과가 될것이다. 하지만 이제 해당 메소드를 원래 취지에 맞게 구현을 해야한다.
 
-<figure><img src="../../../.gitbook/assets/image (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 `build.gradle` 에 추가하였던 라이브러리 레퍼런스를 확인해보면 토큰을 생성하는 로직이 자세하게 명시가 되어있다. ([JWT 토큰 생성](https://github.com/jwtk/jjwt?tab=readme-ov-file#creating-a-jwt))
 
@@ -95,7 +95,7 @@ public class JwtUtils {
 
 이렇게 헤더까지 작업하면 나오는 토큰은 다음과 같이 출력이 된다.
 
-<figure><img src="../../../.gitbook/assets/image (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 `.` 를 기준으로 하나밖에 없는것은 Payload 와 Signiture 를 등록 안했기 때문이다.
 
@@ -129,7 +129,7 @@ builder.claims()
 
 이렇게 설정한 builder 를 생성후에 뜯어내면 다음과 같이 나온다.
 
-<figure><img src="../../../.gitbook/assets/image (2).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (2) (1).png" alt=""><figcaption></figcaption></figure>
 
 아직 설정을 안한 Signiture 를 제외하고는 정상적으로 토큰에 정보다 상세하게 담겨져 나온다.
 
@@ -161,7 +161,7 @@ private SecretKey getSigningKey() {
 
 여기서 별도의 키값을 구분을 했는데, 이는 `hmacShaKeyFor` 와 `byte[]` 타입을 받는 메소드와 매개변수 때문이다. 해당 메소드를 자세히 확인해 보면 다음과 같이 구성되어있다.
 
-<figure><img src="../../../.gitbook/assets/image.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (2).png" alt=""><figcaption></figcaption></figure>
 
 해당 코드를 확인해보면, 매개변수로 받은 `byte[]` 의 size에 따라 암호화 알고리즘이 다르게 res 된다. \
 \
@@ -235,7 +235,7 @@ public class JwtUtils {
 
 테스트를 통해 발급된 JWT를 파싱하면 다음과 같이 나온다.
 
-<figure><img src="../../../.gitbook/assets/image (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 이렇게 JWT 를 생성하는 로직을 완료하고 다음으로 토큰을 읽고 정상 JWT 이 아닌경우 에러 처리하는 것을 진행하겠다.&#x20;
 
