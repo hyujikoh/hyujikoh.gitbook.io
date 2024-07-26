@@ -34,7 +34,7 @@
 * [🔬 인증/인가](study/undefined/README.md)
   * [JWT🎫](study/undefined/jwt/README.md)
     * [JWT with Java Spring 프로젝트 만들기(1) 토큰 생성](study/undefined/jwt/jwt-with-java-spring-1.md)
-    * [JWT with Java Spring 프로젝트 만들기(2) 토큰 읽기 및 핸들링](study/undefined/jwt/jwt-with-java-spring-2.md)
+    * [JWT with Java Spring 프로젝트 만들기(2) 토큰 읽기 및 사용](study/undefined/jwt/jwt-with-java-spring-2.md)
 * [📍 Error 일지](study/error/README.md)
   * [Java Spring](study/error/java-spring/README.md)
     * [HttpMessageConversionException 오류 해결](study/error/java-spring/unhandled-exception-org.springframework.http.converter.httpmessageconversionexception.md)
