@@ -38,7 +38,7 @@ public void fileTest(){
 }
 ```
 
-<img src="../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" data-size="original">
+<img src="../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" data-size="original">
 
 파일은 각각의 id 값을 가지고 경로를 구성하고 있다. 패턴은 거의 일치 하니까 `/` 로 문자열을 분리 해보겠다. 그 안에서 `drive.google.com` 가 있는지 테스트 해보자
 
@@ -53,7 +53,7 @@ public void fileTest(){
 }
 ```
 
-<img src="../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="통과~" data-size="original">
+<img src="../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="통과~" data-size="original">
 
 
 
@@ -127,7 +127,7 @@ public void fileAccessIsOk(){
 
 그렇게  테스트 를 하면 아래와 같이 브라우저로 접근이 가능한 파일 링크를 위와 같은 코드를 통해 접근이 가능해진다.
 
-<img src="../../../.gitbook/assets/image (4).png" alt="test file link" data-size="original">
+<img src="../../../.gitbook/assets/image (4) (1).png" alt="test file link" data-size="original">
 
 <img src="../../../.gitbook/assets/image (5).png" alt="테스트 통과" data-size="original">
 
