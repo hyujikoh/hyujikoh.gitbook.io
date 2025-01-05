@@ -40,6 +40,7 @@
     * [HttpMessageConversionException 오류 해결](study/error/java-spring/unhandled-exception-org.springframework.http.converter.httpmessageconversionexception.md)
     * [UnexpectedRollbackException 오류 해결](study/error/java-spring/unexpectedrollbackexception.md)
     * [HttpMediaTypeNotSupportedException 오류 해결](study/error/java-spring/httpmediatypenotsupportedexception.md)
+  * [elk stack](study/error/elk-stack.md)
 * [☕ Java](study/java/README.md)
   * [Util](study/java/util/README.md)
     * [Java 구글 드라이브 파일 링크를 통해 파일 다운로드](study/java/util/java.md)
