@@ -4,7 +4,7 @@ description: >-
   is not supported"
 ---
 
-# org.springframework.web.HttpMediaTypeNotSupportedException
+# HttpMediaTypeNotSupportedException 오류 해결
 
 ### 문제&#x20;
 
@@ -58,7 +58,7 @@ json 데이터로 RESTFUL 하게 서버와 클라이언트가 서로 통신하�
 자세히 내용을 들여다보면 요청 메시지를 자바 객체로 convertor 해준다고 한다. 좀더 자세히 확인하기 위해 관련된 레퍼런스를 확인해보았다.
 
 {% hint style="info" %}
-Simply put, **the **_**@RequestBody**_** annotation maps the **_**HttpRequest**_** body to a transfer or domain object, enabling automatic deserialization** of the inbound _HttpRequest_ body onto a Java object.
+Simply put, **the&#x20;**_**@RequestBody**_**&#x20;annotation maps the&#x20;**_**HttpRequest**_**&#x20;body to a transfer or domain object, enabling automatic deserialization** of the inbound _HttpRequest_ body onto a Java object.
 
 First, let’s have a look at a Spring controller method:
 
@@ -76,7 +76,7 @@ public ResponseEntity postController(
 
 Spring automatically deserializes the JSON into a Java type, assuming an appropriate one is specified.
 
-By default, **the type we annotate with the **_**@RequestBody**_** annotation must correspond to the JSON sent from our client-side controller:**
+By default, **the type we annotate with the&#x20;**_**@RequestBody**_**&#x20;annotation must correspond to the JSON sent from our client-side controller:**
 {% endhint %}
 
 결국 Spring 에서 `@RequstBody` 는 json 데이터를 java 객체로 역직렬화 해주도록 하는 어노테이션이다.
