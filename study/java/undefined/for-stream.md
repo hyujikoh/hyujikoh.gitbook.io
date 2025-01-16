@@ -66,19 +66,11 @@ public class apiTest {
 
 list 의 길이를 `10000` 으로 했을때 다음과 같은 결과가 나온다.&#x20;
 
-<div align="left">
-
-<figure><img src="../../../.gitbook/assets/image (2) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption><p>list size가 <code>10000</code> 일때 각각 테스트 결과</p></figcaption></figure>
-
-</div>
+<div align="left"><figure><img src="../../../.gitbook/assets/image (2) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption><p>list size가 <code>10000</code> 일때 각각 테스트 결과</p></figcaption></figure></div>
 
 list 의 길이를 `10000000` 으로 했을때는 성능 결과는 다음과 같다.
 
-<div align="left">
-
-<figure><img src="../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption><p>list size가 <code>10000000</code> 일때 각각 테스트 결과</p></figcaption></figure>
-
-</div>
+<div align="left"><figure><img src="../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption><p>list size가 <code>10000000</code> 일때 각각 테스트 결과</p></figcaption></figure></div>
 
 결과만 봤을때는 for 문이 스트림보다 성능이 더 좋다. 그렇다면 왜 스트림을 사용하는 걸까?
 
@@ -172,7 +164,7 @@ public void forStream_ver2(){
 ```
 
 테스트 결과는 다음과 같이 나온다!\
-![](<../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1).png>)
+![](<../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1) (1).png>)
 
 이전 테스트 에서 분명 성능이 더 좋았던 for-loop 가 변수 타입을 참조 타입으로 변경했을뿐인데, 이전 결과가 역전이 되어버린것이었다.
 
@@ -252,11 +244,7 @@ public void cal_cost_test(){
 
 이를 측정한 성능 결과는 다음과 같다.
 
-<div align="left">
-
-<figure><img src="../../../.gitbook/assets/image (14).png" alt=""><figcaption></figcaption></figure>
-
-</div>
+<div align="left"><figure><img src="../../../.gitbook/assets/image (14).png" alt=""><figcaption></figcaption></figure></div>
 
 다음과 같이 계산비용이 높은 테스트에서 for 문이 더이상 성능에 우수함을 나타내지 않는 결과를 확인 할 수 있게 됐다. 즉 내부의 함수 계산 비용과 순회비용을 합친 경우를 고려하여도 stream 으로 구현하여도 성능 저하가 나타나지 않는다는 것이다.
 

@@ -1,4 +1,4 @@
-# JWT with Java Spring 프로젝트 만들기(2) 토큰 읽기
+# JWT with Java Spring 프로젝트 만들기(2) 토큰 유효성 검증
 
 이전 포스트에서 진행한 JWT 생성 로직을 테스트 했으니 실제 이 토큰이 정상적인지 테스트 코드를 통해 검증하는 방식으로 진행할 것이다.&#x20;
 
@@ -10,7 +10,7 @@
 
 
 
-### 토큰 유효성  정상 테스트
+### 토큰 유효성 정상 테스트
 
 기능을 만들기 위해서 테스트코드를 다음과 같이 만들었다.
 
@@ -41,7 +41,7 @@ public boolean isValidJwt(String token) {
 
 이렇게 하면 테스트는  통과는 될것이다.&#x20;
 
-<figure><img src="../../../.gitbook/assets/image (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 이제 이 코드를 정상 코드로 리팩토링이 필요하다.
 
@@ -88,7 +88,7 @@ public boolean isValidJwt(String token) {
 
 이렇게 만든 로직 기반으로 테스트를 해보았다.
 
-<figure><img src="../../../.gitbook/assets/image (2).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (2) (1).png" alt=""><figcaption></figcaption></figure>
 
 다행히 지금 만든 코드는 정상적으로 통과가 되었다.&#x20;
 
@@ -113,4 +113,4 @@ public String createJwt(Long time) {
 
 
 
-<figure><img src="../../../.gitbook/assets/image (3).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (3) (1).png" alt=""><figcaption></figcaption></figure>
