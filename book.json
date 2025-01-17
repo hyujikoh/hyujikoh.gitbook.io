@@ -1,6 +1,7 @@
 {
   "plugins": [
-    "meta-single", "sitemap",
+    "meta-single",
+    "sitemap",
     "ga",
     "gtm"
   ],
