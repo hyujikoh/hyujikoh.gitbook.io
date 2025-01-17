@@ -1,21 +1,23 @@
 {
-    "plugins": [
-        "meta-single" ,"sitemap", "ga", "gtm"
-    ],
-    "pluginsConfig": {
-        "sitemap": {
-            "hostname": "https://hyujikoh-blog.gitbook.io/blog"
-        },
-		"ga": {
-			"token": "GTM-W82884W7"
-		},
-		"gtm": {
-            "token": "GTM-W82884W7"
-        }
-
-	"meta-single": {
-            "name": "google-site-verification",
-            "content": "uSj8vX83K-jH0Uf208vmgG_BICBhUFFENEZnppLe6xs"
-        }
+  "plugins": [
+    "meta-single",
+    "sitemap",
+    "ga",
+    "gtm"
+  ],
+  "pluginsConfig": {
+    "sitemap": {
+      "hostname": "https://hyujikoh-blog.gitbook.io/blog"
+    },
+    "ga": {
+      "token": "GTM-W82884W7"
+    },
+    "gtm": {
+      "token": "GTM-W82884W7"
+    },
+    "meta-single": {
+      "name": "google-site-verification",
+      "content": "uSj8vX83K-jH0Uf208vmgG_BICBhUFFENEZnppLe6xs"
     }
+  }
 }
