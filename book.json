@@ -1,6 +1,6 @@
 {
     "plugins": [
-        "sitemap", "ga", "gtm"
+        "meta-single" ,"sitemap", "ga", "gtm"
     ],
     "pluginsConfig": {
         "sitemap": {
@@ -11,6 +11,11 @@
 		},
 		"gtm": {
             "token": "GTM-W82884W7"
+        }
+
+	"meta-single": {
+            "name": "google-site-verification",
+            "content": "uSj8vX83K-jH0Uf208vmgG_BICBhUFFENEZnppLe6xs"
         }
     }
 }
