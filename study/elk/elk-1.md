@@ -2,7 +2,7 @@
 description: docker network 를 이용해 구성한 ELK 클러스터 입니다.
 ---
 
-# ELK  구축 (1) - 단일 네트워크
+# ELK 구축 (1) - APM Agent 이용한 모니터링
 
 ## 들어가기 앞서
 
@@ -27,6 +27,14 @@ Spring version : 3.2.4
 ### 구성도
 
 <figure><img src="../../.gitbook/assets/Screenshot_2023-10-10_at_9.10.39_AM.png" alt=""><figcaption><p>출처 : <a href="https://www.elastic.co/kr/blog/getting-started-with-the-elastic-stack-and-docker-compose-part-2">https://www.elastic.co/kr/blog/getting-started-with-the-elastic-stack-and-docker-compose-part-2</a></p></figcaption></figure>
+
+
+
+### ELK Compose.yml 파일
+
+(compose 파일 조회)
+
+
 
 ## 본문
 
@@ -140,6 +148,14 @@ docker cp es-cluster-es01-1:/usr/share/elasticsearch/config/certs/ca/ca.crt /tmp
 <figure><img src="../../.gitbook/assets/image (10).png" alt=""><figcaption></figcaption></figure>
 
 <figure><img src="../../.gitbook/assets/image (11).png" alt=""><figcaption></figcaption></figure>
+
+
+
+### APM 서비스 APP 모니터링
+
+
+
+## 결과 및 후기
 
 
 
