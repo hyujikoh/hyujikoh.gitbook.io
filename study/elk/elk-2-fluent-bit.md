@@ -1,3 +1,7 @@
+---
+hidden: true
+---
+
 # ELK 구축 (2) - fluent bit 를 활용한 로깅 모니터링
 
 이전에 했던거들 소개

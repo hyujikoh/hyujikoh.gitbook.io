@@ -1,3 +1,7 @@
+---
+hidden: true
+---
+
 # 🔐 Spring Security
 
 <details>
@@ -6,11 +10,7 @@
 
 * Spring Security 란?
 
-<!---->
-
-* Spring Security arch
-
-<!---->
+- Spring Security arch
 
 * 각각의 종류
 
