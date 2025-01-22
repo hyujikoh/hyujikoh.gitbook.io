@@ -6,7 +6,13 @@ description: docker network 를 이용해 구성한 ELK 클러스터 입니다.
 
 ## 들어가기 앞서
 
-우선 모의 환경으로 로컬 PC 안에 ELK 를 구축하고, 그 안에 APM 에이전트를 붙인 webapp 을 모니터링을 하는 시나리오로 구축할 예정 입니다.
+우선 모의 환경으로 로컬 PC 안에 ELK 를 구축하고, 그 안에 APM 에이전트를 붙인 Application 모니터링을 하는 시나리오로 구축할 예정 입니다.
+
+
+
+여기서 다룬 예제 및 코드는 를 아래 포스트를 참고 및 기반으로 작성하였습니다.&#x20;
+
+{% embed url="https://www.elastic.co/kr/blog/getting-started-with-the-elastic-stack-and-docker-compose-part-2" %}
 
 구성는 다음과 같이 하였습니다.
 
