@@ -12,6 +12,5 @@
 
 #### Blog : [https://hyujikoh-history.gitbook.io](https://hyujikoh-history.gitbook.io)
 
-#### LinkedIn : [https://www.linkedin.com/in/%ED%98%84%EC%A7%81-%EC%98%A4-306b601a2/](https://www.linkedin.com/in/%ED%98%84%EC%A7%81-%EC%98%A4-306b601a2/)
+#### LinkedIn : [PROFILE LINK ](https://www.linkedin.com/in/%ED%98%84%EC%A7%81-%EC%98%A4-306b601a2/)
 
-####
