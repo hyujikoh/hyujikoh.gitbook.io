@@ -361,7 +361,7 @@ services:
 
 기존에 존재하던 webapp 대신 제가 준비한 UrlToKey 프로젝트에 APM 에이전트를 추가하고, 다음과 같이 dockerfile 에 아래와 같은 스크립트를 구성하였습니다.
 
-<div align="center"><figure><img src="../../.gitbook/assets/image.png" alt=""><figcaption></figcaption></figure></div>
+<div align="center"><figure><img src="../../.gitbook/assets/image (2).png" alt=""><figcaption></figcaption></figure></div>
 
 ```docker
 # 베이스 이미지 선택 (Java 17 사용)
@@ -407,7 +407,7 @@ ELK repo 에서 가장 좋았던 부분은 다음과 같았습니다.
 
 이렇게 docker compose 를 이용해 컨테이너들은 다음과 같이 생성 되었습니다.
 
-<figure><img src="../../.gitbook/assets/image (2).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (2) (1).png" alt=""><figcaption></figcaption></figure>
 
 정상적으로 통신이 되었는지 확인을 하기 위해
 

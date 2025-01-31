@@ -45,7 +45,7 @@ public boolean isValidJwt(String token) {
 
 이렇게 하면 테스트는  통과는 될것이다.&#x20;
 
-<figure><img src="../../../.gitbook/assets/image (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 이제 이 코드를 정상 코드로 리팩토링이 필요하다.
 
@@ -92,7 +92,7 @@ public boolean isValidJwt(String token) {
 
 이렇게 만든 로직 기반으로 테스트를 해보았다.
 
-<figure><img src="../../../.gitbook/assets/image (2) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (2) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 다행히 지금 만든 코드는 정상적으로 통과가 되었다.&#x20;
 
