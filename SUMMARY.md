@@ -54,6 +54,7 @@
   * [🔐 Spring Security](study/spring/spring-security.md)
   * [LogBook 을 이용한 MDC 로깅](study/spring/logbook-mdc.md)
   * [JPA/Hibernate MultiTenancy 활용한 다중 스키마 지원 아키텍처 구현](study/spring/jpa-hibernate-multitenancy.md)
+  * [@Scheduled 스레드 테스트](study/spring/scheduled.md)
 * [👓 ELK](study/elk/README.md)
   * [ELK 구축 (1) - APM Agent 이용한 모니터링](study/elk/elk-1.md)
   * [ELK 구축 (2) - fluent bit 를 활용한 로그 모니터링](study/elk/elk-2-fluent-bit.md)
