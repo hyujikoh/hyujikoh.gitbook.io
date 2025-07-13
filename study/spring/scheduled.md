@@ -2,14 +2,16 @@
 
 ## 작성하게 된 이유..
 
-나름 운영한지 5년이 넘은 솔루션은 Spring Boot 기반 서버로 만들어졌고, 이 솔루션에는 알림 관리, 보고서 생성, 데이터 업데이트 등 다양한 단위 작업을 위한 스케줄러가 다양한 주기로 운영되고 있었습니다. 평화롭게 운영되는 이 솔루션에서 어느순간 스케줄러가 일부 동작하지 않게 되었습니다.&#x20;
+나름 운영한지 5년이 넘은 솔루션은 Spring Boot 기반 서버로 만들어졌고, 이 솔루션에는 알림 관리, 보고서 생성, 데이터 업데이트 등 다양한 단위 작업을 위한 스케줄러가 다양한 주기로 운영되고 있었습니다. 평화롭다면 평화롭게? 운영되는 이 솔루션에서 어느순간 스케줄러가 일부 동작하지 않게 되었습니다.&#x20;
 
 #### 문제 현상
 
 1. **전체 스케줄러 중단**: 특정 시점 이후부터 모든 스케줄러가 동작하지 않음
+   1. 특정 날짜에서 부터 스케줄링 기반 결과물이 쌓이지 않는것이 확인 되었습니다.
 2. **재부팅 후 일회성 실행**: 서버 재시작 후 1회만 실행되고 반복 실행 안됨 (1번 현상 재 반복)
+   1. 문제는 재부팅을 했을때 최초 1 회는 되었지만, 동일하게 스케줄링이 안되는 현상이 재 반복 되었습니다.&#x20;
 
-이리저리 분석하여 원인을 찾아본 결과 특정 스케줄러가 blocking 이 되면서 다른 스케줄러가 실행이 안되는 결과에 도달하게 되었습니다.&#x20;
+이리저리 분석하여 원인을 찾아본 결과 특정 스케줄러가 blocking 이 되면서 다른 스케줄러가 실행이 안되는 결과에 도달하게 되었습니다. (블로킹이 되었던 솔루션은 외부 솔루션과 연계되어있던 상황이라 무한정 대기가 되어있던 상황이었습니다. 즉각적으로 로직은 수정을 하였습니다.)
 
 #### 원인 분석: @Scheduled의 단일 스레드 특성
 
@@ -66,7 +68,7 @@ testImplementation 'org.awaitility:awaitility:4.2.0'
 * **테스트 시간**: 총 10초간 관찰
 * **예상 결과**: 단일 스레드로 인한 순차 실행 확인
 
-### 🧪 테스트 환경 구축 <a href="#undefined" id="undefined"></a>
+### 🧪 1단계 : 테스트 환경 구축 및 싱글 스레드 테스트 코드 작성 <a href="#undefined" id="undefined"></a>
 
 #### 프로젝트 설정
 
@@ -224,7 +226,7 @@ public class SchedulerService {
 }
 ```
 
-### 🔬 Awaitility를 활용한 테스트 코드 <a href="#awaitility" id="awaitility"></a>
+#### 🔬 Awaitility를 활용한 테스트 코드 <a href="#awaitility" id="awaitility"></a>
 
 #### 통합 테스트 구성
 
@@ -256,7 +258,7 @@ public class SchedulerTest {
             await().atMost(Duration.ofSeconds(11))
                     .untilAsserted(() -> {
                         // 단일 스레드 환경에서 최소 실행 보장 확인
-                        verify(spyService, atLeast(2)).executeTask1();
+                        verify(spyService, atLeast(1)).executeTask1();
                         verify(spyService, atLeast(1)).executeTask2();
                         verify(spyService, atLeast(1)).executeTask3();
                     });
@@ -290,7 +292,7 @@ public class SchedulerTest {
 }
 ```
 
-### 테스트 로직 핵심 포인트
+#### 테스트 로직 핵심 포인트
 
 #### 1. **Spy 객체 활용**
 
@@ -310,12 +312,12 @@ public class SchedulerTest {
 java// 단일 스레드 환경에서의 계산
 // Task1(1초) + Task2(2초) + Task3(3초) = 6초 사이클
 // 10초 동안 1.6사이클 정도 실행 가능
-verify(spyService, atLeast(2)).executeTask1();  // 최소 2회
+verify(spyService, atLeast(1)).executeTask1();  // 최소 1회
 verify(spyService, atLeast(1)).executeTask2();  // 최소 1회  
 verify(spyService, atLeast(1)).executeTask3();  // 최소 1회
 ```
 
-### 🎯 테스트 결과 및 검증 <a href="#undefined" id="undefined"></a>
+#### 🎯 테스트 결과 및 검증 <a href="#undefined" id="undefined"></a>
 
 ### 실행 결과 확인
 
@@ -327,11 +329,122 @@ verify(spyService, atLeast(1)).executeTask3();  // 최소 1회
 2. **블로킹 현상**: 긴 작업이 다른 스케줄러의 실행을 지연시킴
 3. **예측 가능한 패턴**: 단일 스레드 특성으로 인한 일정한 실행 패턴
 
-### 💡 결론 <a href="#undefined" id="undefined"></a>
+## 🚨 2단계: 블로킹 상황 테스트 - 장시간 실행 스케줄러의 영향 <a href="#id-2" id="id-2"></a>
 
-이 테스트를 통해 **Spring @Scheduled의 단일 스레드 제약사항을 실증적으로 확인**할 수 있었습니다.
+### 🎯 테스트 목적 <a href="#undefined" id="undefined"></a>
 
-**다음 단계**로는:
+첫 번째 테스트에서 단일 스레드 환경에서의 기본 동작을 확인했다면, 이번에는 **실제 운영 환경에서 발생했던 문제 상황을 재연 하고자 했습니다**.
 
-1. **블로킹 상황 테스트**: 특정 스케줄러가 9초 동안 실행되는 상황 시뮬레이션
-2. **멀티스레드 해결책**: ThreadPoolTaskScheduler를 통한 개선 효과 검증
+특정 스케줄러가 **30초 동안 장시간 실행**되어 다른 모든 스케줄러의 실행을 차단하는 기대결과를 얻기 위해 테스트를 작성하였습니다.
+
+테스트를 위한 스케줄러 메소드는 다음과 같이 작성하였습니다.&#x20;
+
+```java
+// SchedulerService.java
+private final AtomicInteger scheduler4Count = new AtomicInteger(0);
+
+// 30초 동안 스레드를 잡아먹는 작업
+public void executeTask4() {
+    int count = scheduler4Count.incrementAndGet();
+    String startTime = LocalDateTime.now().format(formatter);
+    String threadName = Thread.currentThread().getName();
+
+    Logger.info("🟣 [TASK-4] 시작 - 실행횟수: {}, 시간: {}, 스레드: {}", count, startTime, threadName);
+
+    try {
+        // 30초 작업 시뮬레이션
+        Thread.sleep(30000);
+    } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        Logger.error(e, "Task4 interrupted");
+    }
+
+    String endTime = LocalDateTime.now().format(formatter);
+    Logger.info("🟣 [TASK-4] 완료 - 실행횟수: {}, 시간: {}, 스레드: {}", count, endTime, threadName);
+}
+```
+
+스케줄러 등록
+
+```java
+//MyScheduler.java
+
+// 매 0.1초마다 실행 (30초 작업)
+@Scheduled(fixedRate = 100)
+public void scheduler4() {
+    if (isTestPeriod()) {
+        schedulerService.executeTask4();
+    }
+}
+```
+
+* **fixedRate = 100ms**: 매우 짧은 간격으로 실행 시도
+* **30초 작업**: 한 번 실행되면 30초 동안 스레드 점유
+* **결과**: 첫 실행 후 다른 모든 스케줄러가 대기 상태
+
+#### 🧪 블로킹 상황 테스트 코드 <a href="#undefined" id="undefined"></a>
+
+```java
+@Test
+void testScheduledTasksWith30sTask(){
+    // 실제 서비스를 스파이로 감싸기
+    SchedulerService spyService = Mockito.spy(schedulerService);
+
+    // 원본 참조 저장
+    SchedulerService originalService = schedulerService;
+
+    try {
+        // 테스트를 위해 스파이 서비스로 교체
+        ReflectionTestUtils.setField(applicationContext.getBean(MyScheduler.class),
+                "schedulerService", spyService);
+
+        // 10초 동안 스케줄러가 실행되는지 검증
+        await().atMost(Duration.ofSeconds(11))
+                .untilAsserted(() -> {
+                    // Task4가 30초 작업으로 스레드를 점유하는 동안
+                    // 다른 모든 작업들이 실행되지 않음을 검증
+                    verify(spyService, never()).executeTask1();
+                    verify(spyService, never()).executeTask2();
+                    verify(spyService, never()).executeTask3();
+                });
+    } finally {
+        // 테스트 후 원래 서비스로 복원
+        ReflectionTestUtils.setField(applicationContext.getBean(MyScheduler.class),
+                "schedulerService", originalService);
+    }
+}
+```
+
+#### 테스트 중 사용한 주요 방법
+
+1\. **`never()` 검증 사용**
+
+```java
+verify(spyService, never()).executeTask1();
+verify(spyService, never()).executeTask2();
+verify(spyService, never()).executeTask3();
+```
+
+* **목적**: 특정 메서드가 **한 번도 호출되지 않았음**을 검증하는 `mockito.never()` 를 이용해  Task4가 스레드를 점유하는 동안 다른 작업들이 실행되지 않음을 보장하는 테스트를 작성하였습니다.&#x20;
+
+2\. **타이밍 설계**
+
+* **테스트 시간**: 10초 (Task4 실행 시간 30초보다 짧음)
+* **예상 시나리오**:
+  1. Task4가 0.1초 후 시작
+  2. Task4가 30초 동안 실행 (테스트 시간 초과)
+  3. 다른 작업들은 Task4 완료까지 대기
+  4. 10초 테스트 시간 내에는 다른 작업 실행 불가
+
+### 테스트 결과
+
+<figure><img src="../../.gitbook/assets/image.png" alt=""><figcaption></figcaption></figure>
+
+**테스트 결과** 다음과 같이 Task4가 스레드를 점유하고 10초 동안 다른 작업들이 한 번도 실행되지 않고,  **단일 스레드 스케줄러의 블로킹 현상을 재연하였습니다.**
+
+## 참고 문헌 및 자료 <a href="#undefined" id="undefined"></a>
+
+* **비동기 코드의 타이밍 테스트 하기 (with Awaitility)** - [https://velog.io/@joosing/test-the-timing-of-asynchronous-code-with-awaitability](https://velog.io/@joosing/test-the-timing-of-asynchronous-code-with-awaitability)
+* **Introduction to Awaitility** - [https://www.baeldung.com/awaitility-testing](https://www.baeldung.com/awaitility-testing)
+* **awaitility를 사용하여 딜레이 테스트하기** - [https://silvergoni.tistory.com/entry/use-awaitility%EB%A5%BC-%EC%82%AC%EC%9A%A9%ED%95%98%EC%97%AC-%EB%94%9C%EB%A0%88%EC%9D%B4-%ED%85%8C%EC%8A%A4%ED%8A%B8%ED%95%98%EA%B8%B0](https://silvergoni.tistory.com/entry/use-awaitility%EB%A5%BC-%EC%82%AC%EC%9A%A9%ED%95%98%EC%97%AC-%EB%94%9C%EB%A0%88%EC%9D%B4-%ED%85%8C%EC%8A%A4%ED%8A%B8%ED%95%98%EA%B8%B0)
+* **비지니스 로직에 집중하는, 비동기 테스트 코드 만들기** - [https://velog.io/@joosing/focus-on-business-logic-in-asynchronous-test-code](https://velog.io/@joosing/focus-on-business-logic-in-asynchronous-test-code)
