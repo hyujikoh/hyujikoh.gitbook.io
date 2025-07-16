@@ -442,6 +442,225 @@ verify(spyService, never()).executeTask3();
 
 **테스트 결과** 다음과 같이 Task4가 스레드를 점유하고 10초 동안 다른 작업들이 한 번도 실행되지 않고,  **단일 스레드 스케줄러의 블로킹 현상을 재연하였습니다.**
 
+
+
+## ✅  3단계: 멀티스레드 스케줄러 구현 및 검증 <a href="#id-3" id="id-3"></a>
+
+#### 🔧 멀티스레드 스케줄러 설정 <a href="#undefined" id="undefined"></a>
+
+#### Profile 기반 스케줄러 구성
+
+블로킹 문제를 해결하기 위해 **ThreadPoolTaskScheduler**를 사용한 멀티스레드 스케줄러를 구현했습니다.
+
+```java
+@Configuration
+@EnableScheduling
+@Profile("multi") // 프로파일 지정 
+public class SchedulerMultiThreadConfig {
+    @Bean
+    public ThreadPoolTaskScheduler taskScheduler() {
+        ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+        scheduler.setPoolSize(4);  // 4개 스레드 사용
+        scheduler.setThreadNamePrefix("scheduler-multi-");
+        scheduler.initialize();
+        return scheduler;
+    }
+}
+```
+
+#### 설정 특징
+
+#### 1. **Profile 분리**
+
+* `@Profile("multi")`: 멀티스레드 환경을 위한 별도 프로파일
+* 단일 스레드와 멀티스레드 환경을 쉽게 전환 가능
+
+#### 2. **스레드 풀 크기**
+
+* `setPoolSize(4)`: 4개의 스레드로 동시 실행 가능
+* 기존 스케줄러 개수와 동일한 수준으로 설정
+
+{% hint style="info" %}
+사실 적당한 수준에 스레드를 지정하는게 맞습니다. 현재는 테스트 때문에 넉넉하게 스레드로 지정하였지만, 각 프로젝트와 서비스에 맞게 적절한 스레드를 스케줄러 작업에 사용할수 있도록 구성하는게 좋습니다.
+{% endhint %}
+
+#### 3. **스레드 이름 지정**
+
+* `setThreadNamePrefix("scheduler-multi-")`: 로그 추적 용이
+* 멀티스레드 환경에서 어떤 스레드가 실행 중인지 명확히 구분
+
+### 🧪 멀티스레드 환경 테스트 구성 <a href="#undefined" id="undefined"></a>
+
+#### 테스트 클래스 설정
+
+```java
+@SpringBootTest
+@TestPropertySource(properties = {
+        "logging.level.com.scheduler.schedulerproject=DEBUG"
+})
+@ActiveProfiles("multi")  // 멀티스레드 프로파일 활성화
+class MultiThreadSchedulerTests {
+    
+    @Autowired
+    private SchedulerService schedulerService;
+
+    @Autowired
+    private ApplicationContext applicationContext;
+    
+    // 테스트 메서드들...
+}
+```
+
+### 핵심 설정 요소
+
+#### 1. **@ActiveProfiles("multi")**
+
+* 멀티스레드 스케줄러 설정 활성화
+* SchedulerMultiThreadConfig의 ThreadPoolTaskScheduler 사용
+
+#### 2. **디버그 로깅**
+
+* 스레드별 실행 과정을 상세히 관찰
+* 병렬 실행 여부 확인 가능
+
+### 🎯 멀티스레드 검증 테스트 <a href="#undefined" id="undefined"></a>
+
+#### 1. 정상 동작 테스트
+
+```java
+@Test
+@DisplayName("멀티 스레드 기준 스케줄러가 정상적으로 실행되는지 검증")
+void testScheduledTasks() {
+    SchedulerService spyService = Mockito.spy(schedulerService);
+    SchedulerService originalService = schedulerService;
+
+    try {
+        ReflectionTestUtils.setField(applicationContext.getBean(MyScheduler.class),
+                "schedulerService", spyService);
+
+        await().atMost(Duration.ofSeconds(11))
+                .untilAsserted(() -> {
+                    // 모든 작업이 최소 1회 이상 실행되어야 함
+                    verify(spyService, atLeast(1)).executeTask1();
+                    verify(spyService, atLeast(1)).executeTask2();
+                    verify(spyService, atLeast(1)).executeTask3();
+                });
+    } finally {
+        ReflectionTestUtils.setField(applicationContext.getBean(MyScheduler.class),
+                "schedulerService", originalService);
+    }
+}
+```
+
+#### 2. 블로킹 상황 개선 테스트
+
+```java
+@Test
+@DisplayName("30초 작업이 10초 동안 실행되지 않는지 검증 또한 이로인해 다른 태스크들이 실행되지 않는지 검증")
+void testScheduledTasksWith30sTask(){
+    SchedulerService spyService = Mockito.spy(schedulerService);
+    SchedulerService originalService = schedulerService;
+
+    try {
+        ReflectionTestUtils.setField(applicationContext.getBean(MyScheduler.class),
+                "schedulerService", spyService);
+
+        await().atMost(Duration.ofSeconds(11))
+                .untilAsserted(() -> {
+                    // Task4는 30초 작업이므로 10초 내에 완료되지 않음
+                    verify(spyService, never()).executeTask4();
+                    
+                    // 하지만 다른 작업들은 병렬로 실행됨 (핵심 개선사항)
+                    verify(spyService, atLeast(1)).executeTask1();
+                    verify(spyService, atLeast(1)).executeTask2();
+                    verify(spyService, atLeast(1)).executeTask3();
+                });
+    } finally {
+        ReflectionTestUtils.setField(applicationContext.getBean(MyScheduler.class),
+                "schedulerService", originalService);
+    }
+}
+```
+
+#### 테스트 로직의 핵심 차이점
+
+#### 단일 스레드 환경 (as-is)
+
+```
+java// 모든 작업이 실행되지 않음
+verify(spyService, never()).executeTask1();
+verify(spyService, never()).executeTask2();
+verify(spyService, never()).executeTask3();
+```
+
+#### 멀티스레드 환경 (to-be)
+
+```java
+// Task4는 실행 안되지만, 다른 작업들은 병렬 실행됨
+verify(spyService, never()).executeTask4();      // 30초 작업 - 미완료
+verify(spyService, atLeast(1)).executeTask1();   // 1초 작업 - 실행됨
+verify(spyService, atLeast(1)).executeTask2();   // 2초 작업 - 실행됨
+verify(spyService, atLeast(1)).executeTask3();   // 3초 작업 - 실행됨
+```
+
+
+
+이렇게 작성한 테스트 코드를 명확하게 구분하기 위해 각각 이전 테스트 코드는 다음과 같이 수정하였습니다.&#x20;
+
+```java
+// Some code
+
+@Configuration
+@EnableScheduling
+@Profile("single")
+public class SchedulerConfig {
+}
+```
+
+
+
+```java
+// Some code
+@SpringBootTest
+@TestPropertySource(properties = {
+        "logging.level.com.scheduler.schedulerproject=DEBUG"
+})
+@ActiveProfiles("multi")
+class MultiThreadSchedulerTests {
+}
+```
+
+
+
+이렇게 하고 각각 통합으로 테스트를 실행했을때 다음과 같은 테스트 결과가 나옵니다.&#x20;
+
+<figure><img src="../../.gitbook/assets/image (38).png" alt=""><figcaption></figcaption></figure>
+
+
+
+## 후기
+
+해당 프로젝트는 다음과 같이 기록 하였다&#x20;
+
+프로젝트 링크 :   [https://github.com/hyujikoh/shcedulder-test-project](https://github.com/hyujikoh/shcedulder-test-project)
+
+어떻게 보면 단순하고 기본적인 내용이지만, 한번 트러블에 대한걸 정리 할겸 작성하고 기록하는 시간을 가져봤다.&#x20;
+
+
+
+해당 내용의 3줄 요약은 다음과 같다&#x20;
+
+1\. 스케줄링은 기본적으로 단일 스레드다
+
+2\. 멀티 스레드로 해도 되지만 각 서비스의 스케줄링의 중요도에 따라 조절을 하자.&#x20;
+
+3\. 비동기 작업에 대한 테스트 코드를 통해 정합성을 체크했지만, 비동기 작업의 테스트를 보다 \
+면밀하게 할수 있는 기회가 있으면 좋겠다.
+
+
+
+
+
 ## 참고 문헌 및 자료 <a href="#undefined" id="undefined"></a>
 
 * **비동기 코드의 타이밍 테스트 하기 (with Awaitility)** - [https://velog.io/@joosing/test-the-timing-of-asynchronous-code-with-awaitability](https://velog.io/@joosing/test-the-timing-of-asynchronous-code-with-awaitability)
