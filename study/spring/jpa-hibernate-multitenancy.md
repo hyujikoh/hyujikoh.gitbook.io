@@ -2,11 +2,11 @@
 
 ### 개요 <a href="#undefined" id="undefined"></a>
 
-최근 SaaS 애플리케이션이나 대규모 엔터프라이즈 시스템에서는 **하나의 애플리케이션이 여러 고객(테넌트)의 데이터를 논리적으로 분리하여 관리**해야 하는 경우가 많다. 이때 여러 가지 멀티테넌시 전략 중 **"공유 데이터베이스, 분리된 스키마(Shared Database, Separate Schemas)"** 방식은 효율성과 관리 용이성 측면에서 많은 이점을 제공한다.
+재직하고 있는 회사의 솔루션의 요구사항 중 하나인, **하나의 애플리케이션이 여러 고객(테넌트)의 데이터를 논리적으로 분리하여 관리**해야 하는 상황이 존재합니다. 이때 여러 가지 멀티테넌시 전략 중 **"공유 데이터베이스, 분리된 스키마(Shared Database, Separate Schemas)"** 방식은 효율성과 관리 용이성 측면에서 많은 이점을 제공하기 때문에 기존에 운영하고 있는 솔루션을 고도화를 위해 실제 구현및 적용을 해봤습니다.
 
-이 글에서는 **Spring Boot 3.2.5, Java 17, MySQL 환경**에서 JPA/Hibernate의 강력한 멀티테넌시 기능을 활용하여, **HTTP 요청 헤더에 기반한 동적 스키마 전환 로직**을 구현하는 방법을 다룬다.
+이 글에서는 **Spring Boot 3.2.5, Java 17, MySQL 환경**에서 JPA/Hibernate의 멀티테넌시 기능을 활용하여, **HTTP 요청 헤더에 기반한 동적 스키마 전환 로직**을 구현하는 방법을 다룹니다.
 
-### 핵심 요구사항
+### 요구사항
 
 * **하나의 DB 인스턴스 안에 여러 스키마 존재**
 * **HTTP 헤더 `datasource`에 스키마명을 담아 요청**
@@ -18,7 +18,7 @@
 
 ### 왜 Hibernate 멀티테넌시를 선택했나? <a href="#hibernate" id="hibernate"></a>
 
-처음에는 `AbstractRoutingDataSource`를 고려했지만, 다음과 같은 한계가 있었다:
+처음에는 `AbstractRoutingDataSource`를 고려했지만, 다음과 같은 한계가 있었습니다.
 
 ### AbstractRoutingDataSource의 한계
 
@@ -27,15 +27,19 @@
 * **새로운 스키마 추가 시 코드 변경 및 재배포 필요**
 * **각 DataSource마다 별도 커넥션 풀로 인한 리소스 낭비**
 
+> 물론 내가 좀더 조사를 해보고 관련된 레퍼런스 및 문서를 꼼꼼하게 봤다면 ARDS 를 이용해 구현이 가능했겠지만, 아쉽게도 다음 기회를 통해 해보는 시간이 있었음 바란다.&#x20;
+
+이러한 이유 때문에 보다 간결하면서 설정이 가능한 레퍼런스를 찾다 선택한 것이 MultiTenancy 였습니다.
+
 ### Hibernate 멀티테넌시의 강점
 
-* **단 하나의 DataSource Bean만 관리**
+* **단 하나의 DataSource Bean만 관리 (이게 선택의 큰 요인)**
 * **프레임워크 수준의 동적 스키마 전환**
-* **수백 개 스키마 추가에도 코드 변경 불필요**
+* **수백 개 스키마 추가에도 코드 변경 불필요**&#x20;
 * **비즈니스 로직과 멀티테넌시 로직의 완전한 분리**
 * **ThreadLocal 기반 멱등성 보장**
 
-### 아키텍처 설계 <a href="#undefined" id="undefined"></a>
+### 서비스 핵심 컴포넌트 <a href="#undefined" id="undefined"></a>
 
 전체 아키텍처는 다음과 같은 핵심 컴포넌트들로 구성된다:
 
@@ -49,9 +53,7 @@
 
 ### 1. application.yml 설정
 
-기본 DataSource 설정과 Hibernate 멀티테넌시 전략을 정의한다. 중요한 점은 `multi_tenant_connection_provider`와 `tenant_identifier_resolver`를 YAML에 직접 지정하지 않고, `JpaConfig`에서 Spring Bean으로 주입한다는 것이다.
-
-
+기본 DataSource 설정과 Hibernate 멀티테넌시 설정을 정의 합니다. 중요한 점은 `multi_tenant_connection_provider`와 `tenant_identifier_resolver`를 YAML에 직접 지정하지 않고, `JpaConfig`에서 Spring Bean으로 주입한다는 것입니다.&#x20;
 
 ```yaml
 
@@ -82,9 +84,7 @@ spring:
 
 ### 2. ThreadLocal 기반 스키마 컨텍스트 관리
 
-요청 스레드별로 현재 스키마 이름을 안전하게 저장하고 관리한다.
-
-
+요청 스레드별로 현재 스키마 이름을 안전하게 저장하고 관리합니다.
 
 ```java
 
@@ -110,9 +110,7 @@ public class SchemaContextHolder {
 
 ### 3. HTTP 요청 인터셉터 구현
 
-Spring MVC의 `HandlerInterceptor`를 구현하여 모든 HTTP 요청을 가로채고 스키마 검증을 수행한다.
-
-
+Spring MVC의 `HandlerInterceptor`를 구현하여 모든 HTTP 요청을 가로채고 스키마 검증을 수행합니다.
 
 ```java
 
@@ -132,6 +130,8 @@ import javax.sql.DataSource;
 public class SchemaValidationInterceptor implements HandlerInterceptor {
     
     private final JdbcTemplate defaultJdbcTemplate;
+    
+    // 스키마가 없을 경우 설정하는 디폴트 스
     private static final String DEFAULT_SCHEMA_NAME = "main_db";
     
     public SchemaValidationInterceptor(@Qualifier("dataSource") DataSource defaultDataSource) {
@@ -180,11 +180,9 @@ public class SchemaValidationInterceptor implements HandlerInterceptor {
 }
 ```
 
-### 4. Hibernate 테넌트 식별자 리졸버
+### 4. Hibernate TenantIdentifierResolver
 
-Hibernate가 현재 어떤 스키마를 사용해야 하는지 물어볼 때 호출되는 컴포넌트다.
-
-
+Hibernate가 현재 어떤 스키마를 사용해야 하는지 물어볼 때 호출되는 컴포넌트입니다.
 
 ```java
 
@@ -212,11 +210,9 @@ public class TenantIdentifierResolver implements CurrentTenantIdentifierResolver
 }
 ```
 
-### 5. 멀티테넌트 커넥션 프로바이더 구현
+### 5. 멀티테넌트 커넥션 provider 구현
 
-이 컴포넌트가 **동적 스키마 전환의 핵심**이다. 단일 DataSource에서 커넥션을 가져온 후, `USE <schema_name>` 쿼리를 실행하여 스키마를 동적으로 변경한다.
-
-
+해당 컴포넌트는 **동적 스키마 전환을 수행하기 위한 핵심 컴포넌트 입니다**. 단일 DataSource에서 커넥션을 가져온 후, `USE <schema_name>` 쿼리를 실행하여 스키마를 동적으로 변경합니다. 이를 통해 수백개의 스키마를 처리하여도 문제없이 동적으로 변환이 가능합니다.
 
 ```java
 
@@ -303,9 +299,7 @@ public class SchemaMultiTenantConnectionProvider implements MultiTenantConnectio
 
 ### 6. JPA 설정 클래스
 
-Spring이 관리하는 Bean 인스턴스들을 Hibernate EntityManagerFactory에 직접 주입한다. 이는 Hibernate가 직접 인스턴스화할 때 발생하는 문제를 해결한다.
-
-
+Spring이 관리하는 Bean 인스턴스들을 Hibernate EntityManagerFactory에 직접 주입을 하는데, 이전에 yaml 파일에 작성하였을때 발생하는 오류를 Hibernate가 직접 인스턴스화 하여 해결을 합니다.
 
 ```java
 
@@ -366,9 +360,7 @@ public class JpaConfig {
 
 ### 7. 웹 설정 클래스
 
-인터셉터를 Spring MVC 체인에 등록한다.
-
-
+인터셉터를 Spring MVC 체인에 등록합니다.
 
 ```java
 
@@ -399,9 +391,7 @@ public class WebConfig implements WebMvcConfigurer {
 
 ### 8. 엔티티 예시
 
-`createdAt`, `updatedAt` 컬럼에 MySQL 기본값을 명시적으로 설정하여 DB 레벨에서 기본값이 보장되도록 한다.
-
-
+`createdAt`, `updatedAt` 컬럼에 MySQL 기본값을 명시적으로 설정하여 DB 레벨에서 기본값이 보장되도록 합니다.
 
 ```java
 
@@ -507,8 +497,6 @@ public class Product extends BaseEntity {
 ```
 
 ### 9. Repository 및 Service 예시
-
-
 
 ```java
 
@@ -698,8 +686,6 @@ public class ProductController {
 
 ### 11. 메인 애플리케이션 클래스
 
-
-
 ```java
 
 package com.example.multischema;
@@ -722,15 +708,11 @@ public class MultiSchemaApplication {
 
 **기본 스키마 사용 (헤더 없음)**
 
-
-
 ```
 bashGET http://localhost:8080/api/products?page=0&size=10
 ```
 
 **특정 스키마 사용**
-
-
 
 ```
 bashGET http://localhost:8080/api/products?page=0&size=10
@@ -738,8 +720,6 @@ datasource: tenant_a
 ```
 
 **다른 스키마 사용**
-
-
 
 ```
 bashPOST http://localhost:8080/api/products
@@ -755,9 +735,6 @@ datasource: tenant_b
 ```
 
 **존재하지 않는 스키마 (오류 발생)**
-
-```
-```
 
 ```
 bashGET http://localhost:8080/api/products
@@ -791,7 +768,7 @@ textspring.jpa.properties.hibernate:
 
 ### 결론 <a href="#undefined" id="undefined"></a>
 
-이 아키텍처는 다음과 같은 장점을 제공한다:
+해당 구조를 통해서 다음과 같은 장점을 얻었습니다.
 
 * **높은 확장성**: 수백 개의 스키마 추가에도 코드 변경 불필요
 * **낮은 결합성**: 비즈니스 로직과 멀티테넌시 로직의 완전한 분리
@@ -799,4 +776,8 @@ textspring.jpa.properties.hibernate:
 * **간결한 설정**: 단일 DataSource로 모든 스키마 관리
 * **안정성**: USE 쿼리 방식으로 DB 드라이버 호환성 문제 해결
 
-이 가이드가 복잡한 다중 스키마 환경에서 견고하고 유지보수 가능한 Spring Boot 애플리케이션을 구축하는 데 도움이 되길 바란다.
+물론 단점도 엄연히 존재 합니다.
+
+* MySQL 에서만 테스트를 하였지만,  postgreql 에서는 정상 작동 여부를 확인 못했습니다. 즉 jpa 에 장점인 db 에 종속적인 부분이 생겼습니다.&#x20;
+* 스키마가 존재하지 않을시에 예외 케이스를 작성하였습니다. 다만 사전에 검증 및 수행하는 로직을 분리하여 스키마 를 use 하기 전에 적용하였으면 보다 안전한 동작이 가능했다고 생각합니다.&#x20;
+* 특정 스키마에서 트래픽이 몰릴경우에 서버에서 어떤 고객사 스키마로 호출되고 관리가 되는지 관리가 안되는 문제점이 존재합니다.&#x20;
