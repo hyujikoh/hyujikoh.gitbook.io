@@ -48,8 +48,11 @@ Core Web Vitals 외에도 라이트하우스는 다음과 같은 추가 지표�
 
 #### TBT , Speed Index
 
-앞서 지표중 TBT 는 사용자 입력이 응답하지 못하도록 차단된 시간의 지표였습니다. row 데이터가 많아지면 많아질수록 점수에 영향이 직접적이었습니다. 많은 row 데이터를 chart, grid 형태로 랜더링 하는 과정에  \
-FCP 와 상호작용 시간 사이에 모든 장기 작업(50ms 이상)의 차단 부분(Grid, Chart 등)을 더하여 계산했습니다.
+앞서 지표중 TBT 는 사용자 입력이 응답하지 못하도록 차단된 시간의 지표였습니다. row 데이터가 많아지면 많아질수록 점수에 영향이 직접적이었습니다.&#x20;
+
+SI(8.4s), TBT(3.53) 라고 가정했을 경우, 조회 페이지에서 시각화 도구 기반 컨텐츠가 나오고, 사용자 입력이 가능하기 까지 총 12s 시간이 발생됨
+
+많은 row 데이터를 chart, grid 형태로 랜더링 하는 과정에  FCP 와 상호작용 시간 사이에 모든 장기 작업(50ms 이상)의 차단 부분(Grid, Chart 등)을 더하여 계산했습니다.
 
 <figure><img src="../../.gitbook/assets/image (39).png" alt=""><figcaption></figcaption></figure>
 
@@ -66,4 +69,59 @@ SI 도 같은 맥락으로 row 데이터를 기반으로 chart , grid content �
 <figure><img src="../../.gitbook/assets/image (42).png" alt=""><figcaption></figcaption></figure>
 
 
+
+## 해결 및 조치 과정
+
+위에 나온 수치를 토대로 TBT , SI 를 개선 하기 위한 작업을 위해 라이트 하우스에 나온 리포트 결과를 좀더 면밀히 \
+분석하였습니다.
+
+### JS 성능 저하
+
+다음 지표는 row 데이터 3000개 기준으로 성능 측정을 하였을때 피드백 입니다. js 실행시간을 단축하라는 것이 주 내용입니다.&#x20;
+
+<figure><img src="../../.gitbook/assets/image (43).png" alt=""><figcaption></figcaption></figure>
+
+
+
+그러나 row 데이터가 늘어나면 늘어날수록 실행 시간이 기하급수적으로 증가하는 사실이 확인 되었습니다.&#x20;
+
+보통 외부 라이브러리로 사용되는 [AMCHART](https://www.amcharts.com/) 스크립트에서 많은 소모시간이 발생되었습니다.&#x20;
+
+<figure><img src="../../.gitbook/assets/image (44).png" alt=""><figcaption></figcaption></figure>
+
+이렇게 실행시간이 많이 발생하는 부분이 무엇인지 분석해본 결과 가장 큰 원인이 되는 부분이 있었습니다.&#x20;
+
+#### Bullets 으로 인한 성능 지연
+
+AMCHART 에서 차트를 그리는 기능중 bullets 이란 것이 있습니다. 우리가 흔히 차트에 변곡점등 포인트가  Bullets 입니다.  아래 같은 포인트들이 각각 하나의 bullet 입니다.
+
+{% embed url="https://codepen.io/team/amcharts/pen/WJjybm" %}
+
+이  Bullets은 문제가 하나 있는데 직접적으로 성능에 큰 영향을 끼친다는 것입니다. ([공식문서](https://www.amcharts.com/docs/v4/concepts/bullets/#Bullet_performance))
+
+> ### Bullet performance <a href="#bullet_performance" id="bullet_performance"></a>
+>
+> Since bullets usually come in packs, they might reduce chart performance.
+>
+> Please check "[Bullets](https://www.amcharts.com/docs/v4/concepts/performance/#Bullets)" section in our "Performance" article for tips on how to set up bullets so they don't bog down your website or application.
+
+저희 서비스는 이전에 나름 운영하던 서비스 중 오래된 서비스에 속했고, 처음에 핸들링 하는 데이터 수도 적었고 그래서 Bullets 으로 차트를 표현했을 해왔습니다. 하지만 서비스가 오래 되면서 활용해야하는 row 데이터는 많아지고 그러다 보니 Bullets 자체가 성능에 영향을 끼치는 범위를 넘어서던 것이었습니다.&#x20;
+
+불필요한 bullets 을 제거하는 것을 목표로 하여 레거시 코드를 리팩토링을 하였습니다.
+
+
+
+#### Chart 픽셀 간격 처리
+
+저희 서비스에서 차트를 그릴때 모든 row 데이터를 차트 포인트로 적용하는 방식을 진행하였습니다. 이것도 앞서 설명했던 대로 데이터 가 많아지면서 발생했던 문제였습니다. 차트의 가시성을 위해서 라도 js 개선 작업에 chart  pixel 간격을 처리를 하기로 하였습니다.
+
+AMCHARTS 에서는 차트에 대해서 각 로우 데이터의 차트를 그릴떄  pixel 간격을 지정할수있는 옵션이 있습니다. ([공식문서](https://www.amcharts.com/docs/v4/reference/options/#minPolylineStep_property)) 이를 통해서도 모든 포인트를 그리는 대신 10 pixel 간격으로 차트 그래프를 그리는 방식을 적용하였습니다.
+
+```javascript
+am4core.options.minPolylineStep = 10;
+```
+
+
+
+### 리소스 응답 데이터 압축
 
