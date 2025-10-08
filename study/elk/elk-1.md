@@ -10,7 +10,7 @@ description: docker network 를 이용해 구성한 ELK 클러스터 입니다.
 
 
 
-여기서 다룬 예제 및 코드는 를 아래 포스트를 참고 및 기반으로 작성하였습니다.&#x20;
+여기서 다룬 예제 및 코드는 아래 포스트를 참고 및 기반으로 작성하였습니다.&#x20;
 
 {% embed url="https://www.elastic.co/kr/blog/getting-started-with-the-elastic-stack-and-docker-compose-part-2" %}
 
@@ -462,7 +462,7 @@ docker cp es-cluster-es01-1:/usr/share/elasticsearch/config/certs/ca/ca.crt /tmp
 
 <figure><img src="../../.gitbook/assets/image (9).png" alt=""><figcaption></figcaption></figure>
 
-이렇게 설정값을 수정한 다음 deploy 후fleet 서버에 메트릭 정보가 나오면 정상적으로 설정이 완료 되었다는 뜻입니다.
+이렇게 설정값을 수정한 다음 deploy 를 한 다음 , Fleet 서버에 메트릭 정보가 나오면 정상적으로 설정이 완료 되었다는 뜻입니다.
 
 <figure><img src="../../.gitbook/assets/image (10).png" alt=""><figcaption></figcaption></figure>
 

@@ -63,4 +63,5 @@
 
 ## REVIEW
 
-* [🏃‍♂️ 러너스 하이와 나의 이야기: 토스 러너스하이 1기를 돌아보며](review/1.md)
+* [세션 및 컨퍼런스 참여 후기](review/undefined/README.md)
+  * [🏃‍♂️ 러너스 하이와 나의 이야기: 토스 러너스하이 1기를 돌아보며](review/undefined/1.md)
