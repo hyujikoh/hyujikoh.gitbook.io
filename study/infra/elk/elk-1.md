@@ -32,7 +32,7 @@ Spring version : 3.2.4
 
 ### 구성도
 
-<figure><img src="../../.gitbook/assets/Screenshot_2023-10-10_at_9.10.39_AM.png" alt=""><figcaption><p>출처 : <a href="https://www.elastic.co/kr/blog/getting-started-with-the-elastic-stack-and-docker-compose-part-2">https://www.elastic.co/kr/blog/getting-started-with-the-elastic-stack-and-docker-compose-part-2</a></p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/Screenshot_2023-10-10_at_9.10.39_AM.png" alt=""><figcaption><p>출처 : <a href="https://www.elastic.co/kr/blog/getting-started-with-the-elastic-stack-and-docker-compose-part-2">https://www.elastic.co/kr/blog/getting-started-with-the-elastic-stack-and-docker-compose-part-2</a></p></figcaption></figure>
 
 
 
@@ -361,7 +361,7 @@ services:
 
 기존에 존재하던 webapp 대신 제가 준비한 UrlToKey 프로젝트에 APM 에이전트를 추가하고, 다음과 같이 dockerfile 에 아래와 같은 스크립트를 구성하였습니다.
 
-<div align="center"><figure><img src="../../.gitbook/assets/image (2).png" alt=""><figcaption></figcaption></figure></div>
+<div align="center"><figure><img src="../../../.gitbook/assets/image (2).png" alt=""><figcaption></figcaption></figure></div>
 
 ```docker
 # 베이스 이미지 선택 (Java 17 사용)
@@ -407,19 +407,19 @@ ELK repo 에서 가장 좋았던 부분은 다음과 같았습니다.
 
 이렇게 docker compose 를 이용해 컨테이너들은 다음과 같이 생성 되었습니다.
 
-<figure><img src="../../.gitbook/assets/image (2) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (2) (1).png" alt=""><figcaption></figcaption></figure>
 
 정상적으로 통신이 되었는지 확인을 하기 위해
 
 [https://localhost:5601](https://localhost:5601) 로 들어가서 접속이 되는지 확인을 합니다.
 
-<figure><img src="../../.gitbook/assets/image (3).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (3).png" alt=""><figcaption></figcaption></figure>
 
 
 
 정상적으로 접속이 된걸 확인하면 `.env` 파일에 있던 패스워드를 이용해 로그인을 진행합니다.
 
-<figure><img src="../../.gitbook/assets/image (4).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (4).png" alt=""><figcaption></figcaption></figure>
 
 
 
@@ -427,7 +427,7 @@ ELK repo 에서 가장 좋았던 부분은 다음과 같았습니다.
 
 이렇게 진행하고, Managenet - Fleet 페이지로 들어가게 되면 Fleet 서버가 제대로 통신이 되지만, 메트릭 정보가 조회가 안되는걸 확인할수 있습니다.
 
-<figure><img src="../../.gitbook/assets/image (5).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (5).png" alt=""><figcaption></figcaption></figure>
 
 Fleet 서버 컨테이너 로그를 확인했을때 다음과 같은 오류가 나왔습니다.
 
@@ -445,7 +445,7 @@ Fleet 서버 컨테이너 로그를 확인했을때 다음과 같은 오류가 �
 1. 출력 설정 수정\
    setting - Outputs 의 설정을 수정 합니다.&#x20;
 
-<figure><img src="../../.gitbook/assets/image (7).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (7).png" alt=""><figcaption></figcaption></figure>
 
 2. CA 인증서 및 지문 추가\
    인증서 와 지문을 가져오기 위해 로컬 pc 에서 shell 명령어로 다음과 같이 입력 합니다.
@@ -456,17 +456,17 @@ docker cp es-cluster-es01-1:/usr/share/elasticsearch/config/certs/ca/ca.crt /tmp
 
 또한 이렇게 가져온 인증서 지문을 생성하기 위해 다음과 같이 진행합니다.
 
-<figure><img src="../../.gitbook/assets/image (8).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (8).png" alt=""><figcaption></figcaption></figure>
 
 마지막으로 `ca.crt` 의 인증서를 확인한다음 출력 설정 부분에 다음과 같이 설정 하면 끝입니다.
 
-<figure><img src="../../.gitbook/assets/image (9).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (9).png" alt=""><figcaption></figcaption></figure>
 
 이렇게 설정값을 수정한 다음 deploy 를 한 다음 , Fleet 서버에 메트릭 정보가 나오면 정상적으로 설정이 완료 되었다는 뜻입니다.
 
-<figure><img src="../../.gitbook/assets/image (10).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (10).png" alt=""><figcaption></figcaption></figure>
 
-<figure><img src="../../.gitbook/assets/image (11).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (11).png" alt=""><figcaption></figcaption></figure>
 
 
 
@@ -474,11 +474,11 @@ docker cp es-cluster-es01-1:/usr/share/elasticsearch/config/certs/ca/ca.crt /tmp
 
 APM 을 통해 다음과 같이 에이전트를 통해 모니터링되는 서비스를 확인할 수 있다.
 
-<figure><img src="../../.gitbook/assets/image (35).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (35).png" alt=""><figcaption></figcaption></figure>
 
-<figure><img src="../../.gitbook/assets/image (36).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (36).png" alt=""><figcaption></figcaption></figure>
 
-<figure><img src="../../.gitbook/assets/image (37).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (37).png" alt=""><figcaption></figcaption></figure>
 
 
 
