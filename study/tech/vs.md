@@ -241,11 +241,11 @@ class OrderE2ETest {
 
 테스트에는 **트레이드오프(Trade-off)** 가 있기 때문입니다.
 
-| 테스트 유형 | 실행 속도     | 신뢰도   | 유지보수 비용   | 권장 개수     |
-| ------ | --------- | ----- | --------- | --------- |
-| E2E    | 🐌 5\~10초 | ⭐⭐⭐⭐⭐ | 💰💰💰 높음 | 5\~10개    |
-| 통합     | 🐢 1\~3초  | ⭐⭐⭐⭐  | 💰💰 보통   | 20\~50개   |
-| 단위     | ⚡ 0.1초    | ⭐⭐⭐   | 💰 낮음     | 100\~500개 |
+| 테스트 유형 | 신뢰도   | 유지보수 비용   | 권장 개수     |
+| ------ | ----- | --------- | --------- |
+| E2E    | ⭐⭐⭐⭐⭐ | 💰💰💰 높음 | 5\~10개    |
+| 통합     | ⭐⭐⭐⭐  | 💰💰 보통   | 20\~50개   |
+| 단위     | ⭐⭐⭐   | 💰 낮음     | 100\~500개 |
 
 피라미드는 이 트레이드오프를 최적화하여:
 
@@ -257,39 +257,39 @@ class OrderE2ETest {
 
 ***
 
-### **2부: 전통의 강자, '테스트 피라미드' 🔺** <a href="#undefined" id="undefined"></a>
+### **2부: 전통의 강자, '테스트 피라미드'**  <a href="#undefined" id="undefined"></a>
 
 ### 실전 예시: 복잡한 할인 정책 계산 🏷️
 
-전자상거래 사이트에서 주문을 생성할 때 복잡한 할인 정책이 적용된다고 가정해 봅시다:
+전자상거래 사이트에서 주문을 생성할 때 복잡한 할인 정책이 적용된다고 가정해 보겠습니다.
+
+아래에는 할인에 대한 가상의 요구사항을 정의 해보도록하겠습니다.
 
 * VIP 회원: 20% 할인
 * 첫 구매 고객: 5,000원 할인
 * 쿠폰 적용
 * 중복 할인 제한
 
-이런 복잡한 로직을 테스트 피라미드로 어떻게 테스트할까요?
+이런 복잡한 로직을 테스트 피라미드 기준으로 테스트 비중을 아래와 같이 맞추었습니다.&#x20;
 
 ***
 
 ### 70% - 단위 테스트: 비즈니스 로직에 집중 ⚡
 
-
-
 ```java
 // 주문 서비스 단위 테스트
 class OrderServiceTest {
     
-    @Mock  // 🎭 실제 ProductRepository 대신 Mock 사용
+    @Mock  // 👻 실제 ProductRepository 대신 Mock 사용
     private ProductRepository productRepository;
     
-    @Mock  // 🎭 실제 UserRepository 대신 Mock 사용
+    @Mock  // 👻 실제 UserRepository 대신 Mock 사용
     private UserRepository userRepository;
     
-    @Mock  // 🎭 실제 DiscountPolicy 대신 Mock 사용
+    @Mock  // 👻 실제 DiscountPolicy 대신 Mock 사용
     private DiscountPolicy discountPolicy;
     
-    @Mock  // 🎭 실제 OrderRepository 대신 Mock 사용
+    @Mock  // 👻 실제 OrderRepository 대신 Mock 사용
     private OrderRepository orderRepository;
     
     @InjectMocks  // Mock들을 주입받은 실제 테스트 대상
@@ -309,20 +309,20 @@ class OrderServiceTest {
         
         Product product = new Product(productId, "노트북", Money.wons(1000000));
         
-        // 🎭 Stub: UserRepository가 VIP 사용자를 반환하도록 설정
+        // 👻 Stub: UserRepository가 VIP 사용자를 반환하도록 설정
         when(userRepository.findById(userId))
             .thenReturn(Optional.of(vipUser));
         
-        // 🎭 Stub: ProductRepository가 상품 정보를 반환하도록 설정
+        // 👻 Stub: ProductRepository가 상품 정보를 반환하도록 설정
         when(productRepository.findById(productId))
             .thenReturn(Optional.of(product));
         
-        // 🎭 Stub: DiscountPolicy가 20% 할인을 반환하도록 설정
+        // 👻 Stub: DiscountPolicy가 20% 할인을 반환하도록 설정
         Money expectedDiscount = Money.wons(200000);
         when(discountPolicy.calculate(any(), any(), any()))
             .thenReturn(expectedDiscount);
         
-        // 🎭 Stub: OrderRepository가 저장 성공을 시뮬레이션
+        // 👻 Stub: OrderRepository가 저장 성공을 시뮬레이션
         when(orderRepository.save(any()))
             .thenAnswer(invocation -> invocation.getArgument(0));
         
@@ -334,7 +334,7 @@ class OrderServiceTest {
         assertThat(order.getDiscountAmount()).isEqualTo(expectedDiscount);
         assertThat(order.getFinalPrice()).isEqualTo(Money.wons(800000));
         
-        // 🎭 Mock 검증: 각 Repository가 올바르게 호출되었는지 확인
+        // 👻 Mock 검증: 각 Repository가 올바르게 호출되었는지 확인
         verify(userRepository).findById(userId);
         verify(productRepository).findById(productId);
         verify(discountPolicy).calculate(any(), eq(vipUser), any());
@@ -348,7 +348,7 @@ class OrderServiceTest {
         Long userId = 1L;
         Long productId = 100L;
         
-        // 🎭 Stub: 재고가 부족한 상황 시뮬레이션
+        // 👻 Stub: 재고가 부족한 상황 시뮬레이션
         when(productRepository.findById(productId))
             .thenReturn(Optional.of(new Product(productId, "품절상품", Money.wons(10000))));
         when(inventoryRepository.checkStock(productId, 10))
@@ -359,7 +359,7 @@ class OrderServiceTest {
             .isInstanceOf(OutOfStockException.class)
             .hasMessage("재고가 부족합니다");
         
-        // 🎭 Mock 검증: 재고 확인까지만 호출되고 저장은 안됨
+        // 👻 Mock 검증: 재고 확인까지만 호출되고 저장은 안됨
         verify(inventoryRepository).checkStock(productId, 10);
         verify(orderRepository, never()).save(any());
     }
@@ -368,9 +368,11 @@ class OrderServiceTest {
 
 **단위 테스트에서 모든 의존성을 Mock으로 격리하는 이유:**
 
-* ⚡ **빠름**: DB나 외부 API 호출 없이 메모리에서만 실행
-* 🎯 **집중**: OrderService의 비즈니스 로직만 검증
-* 🔧 **제어**: 재고 부족, 결제 실패 등 원하는 시나리오를 쉽게 재현
+⚡ **빠름**: DB나 외부 API 호출 없이 메모리에서만 실행
+
+🎯 **집중**: OrderService의 비즈니스 로직만 검증
+
+🔧 **제어**: 재고 부족, 결제 실패 등 원하는 시나리오를 쉽게 재현
 
 물론 이 테스트들이 얼마나 빠를지는 프로젝트의 복잡도에 따라 다르지만, 일반적으로 통합 테스트나 E2E보다는 훨씬 빠르게 실행됩니다.
 
@@ -384,19 +386,19 @@ class OrderServiceTest {
 @Transactional
 class OrderDiscountIntegrationTest {
     
-    @Autowired  // ✅ 실제 OrderService 사용
+    @Autowired  //  실제 OrderService 사용
     private OrderService orderService;
     
-    @Autowired  // ✅ 실제 Repository들 사용
+    @Autowired  // 실제 Repository들 사용
     private UserRepository userRepository;
     private ProductRepository productRepository;
     private InventoryRepository inventoryRepository;
     private OrderRepository orderRepository;
     
-    @MockBean  // 🎭 외부 결제 API만 Mock으로 대체
+    @MockBean  // 👻 외부 결제 API만 Mock으로 대체
     private PaymentGateway paymentGateway;
     
-    @MockBean  // 🎭 이메일 발송도 Mock으로 대체
+    @MockBean  // 👻 이메일 발송도 Mock으로 대체
     private EmailService emailService;
     
     @Test
@@ -418,7 +420,7 @@ class OrderDiscountIntegrationTest {
             new Inventory(product.getId(), 10)
         );
         
-        // 🎭 Stub: 외부 결제 API는 성공 응답하도록 설정
+        // 👻 Stub: 외부 결제 API는 성공 응답하도록 설정
         when(paymentGateway.processPayment(any()))
             .thenReturn(new PaymentResult(SUCCESS, "txn-12345"));
         
@@ -437,21 +439,21 @@ class OrderDiscountIntegrationTest {
         Inventory updatedInventory = inventoryRepository.findByProductId(product.getId()).get();
         assertThat(updatedInventory.getQuantity()).isEqualTo(8);
         
-        // 🎭 Mock 검증: 외부 시스템 호출 확인
+        // 👻 Mock 검증: 외부 시스템 호출 확인
         verify(paymentGateway).processPayment(any());
         verify(emailService).sendOrderConfirmation(order.getId());
     }
 }
 ```
 
-**통합 테스트에서 Test Double을 선택적으로 사용하는 이유:**
+**통합 테스트에서 Test Double을 선택적으로 사용하는 이유는 다음과 같습니다.**
 
 | 대상                  | 실제 vs Mock | 이유                 |
 | ------------------- | ---------- | ------------------ |
 | Service, Repository | ✅ 실제       | 우리가 제어 가능한 내부 시스템  |
 | DB 연동               | ✅ 실제       | 실제 데이터 저장/조회 검증 필요 |
-| PaymentGateway      | 🎭 Mock    | 외부 API, 실제 호출 시 과금 |
-| EmailService        | 🎭 Mock    | 실제 발송 시 느리고 비용 발생  |
+| PaymentGateway      | 👻 Mock    | 외부 API, 실제 호출 시 과금 |
+| EmailService        | 👻 Mock    | 실제 발송 시 느리고 비용 발생  |
 
 ***
 
@@ -470,14 +472,14 @@ class OrderDiscountIntegrationTest {
 
 ***
 
-### 하지만 피라미드가 완벽할까? 🤔
+### 하지만 피라미드는 정말 어떤상황에서도 적용이 가능한 기법일까요? 🤔
 
 요즘 우리가 만드는 애플리케이션을 생각해보면:
 
-마이크로서비스로 쪼개져 있고 🔗
+마이크로서비스로 쪼개져 있고 🔗, 외부 API를 여러 개 호출하고 ☁️, 데이터베이스와 복잡하게 얽혀 있습니다. \
+즉 일일히 다 연결을 하여 테스트 하는것은 현실적으로 매우 어렵습니다.&#x20;
 
-* 외부 API를 여러 개 호출하고 ☁️
-* 데이터베이스와 복잡하게 얽혀 있습니다 🗄️
+그래서 위와 같은 시나리오 기반 테스트를 한다고 했을때,  Mock 을 통해서 의존성을 최소한으로 하였습니다.
 
 이런 환경에서 단위 테스트로 모든 의존성을 Mock으로 대체하면:
 
@@ -486,3 +488,6 @@ class OrderDiscountIntegrationTest {
 * "테스트는 통과하는데 배포하면 터진다"
 
 이 문제를 해결하기 위해 다른 접근법을 소개하겠습니다.  🏆
+
+
+
