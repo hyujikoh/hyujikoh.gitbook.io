@@ -53,7 +53,7 @@ json 데이터로 RESTFUL 하게 서버와 클라이언트가 서로 통신하�
 
 `@RequstBody` 어노테이션의 특징은 다음과 같다.&#x20;
 
-<figure><img src="../../../.gitbook/assets/image (12) (1).png" alt=""><figcaption><p>english.. english</p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (12) (1).png" alt=""><figcaption><p>english.. english</p></figcaption></figure>
 
 자세히 내용을 들여다보면 요청 메시지를 자바 객체로 convertor 해준다고 한다. 좀더 자세히 확인하기 위해 관련된 레퍼런스를 확인해보았다.
 

@@ -20,7 +20,7 @@ description: JWT 에 대해 이해하고 공부를 위한 POST
 >
 > Although JWTs can be encrypted to also provide secrecy between parties, we will focus on _signed_ tokens. Signed tokens can verify the _integrity_ of the claims contained within it, while encrypted tokens _hide_ those claims from other parties. When tokens are signed using public/private key pairs, the signature also certifies that only the party holding the private key is the one that signed it.
 >
-> \-jwt.io 소개란 발췌
+> -jwt.io 소개란 발췌
 
 정리하자면 당사자 간의 정보를 안전하게 전송하기 위한 방법으로 JSON 객체로 정의하는 표준 방법( RFC 7519) 을 JWT 라고 한다. JWT 는 비밀키 또는 공개/개인 키(RSA or ECDSA)를 사용하여 서명할 수 있다.
 
@@ -39,9 +39,9 @@ RFC 자체는 인터넷과 관련된 다양한 기술, 프로토콜 절차등을
 
 실제 RFC 에서 관리되고 있는 목록을 보면 RFC 7519 의 status 는 `Proposed Standard` 표준으로 제안이 되어있는 상태고, `Best Current Practices` 는 RFC 8725 로 되어있다는것을 참고하면 좋을것 같다.
 
-<figure><img src="../../../.gitbook/assets/image (29).png" alt=""><figcaption><p>RFC 8725</p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (29).png" alt=""><figcaption><p>RFC 8725</p></figcaption></figure>
 
-<figure><img src="../../../.gitbook/assets/image (30).png" alt=""><figcaption><p>RFC 7519</p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (30).png" alt=""><figcaption><p>RFC 7519</p></figcaption></figure>
 
 
 
@@ -101,7 +101,7 @@ payload는 토큰에 담을 클레임(claim) 정보를 포함하고 있다. 페�
 ## 참고 레퍼런스 및 사이트
 
 * RFC editor\
-  [https://www.rfc-editor.org/search/rfc\_search\_detail.php](https://www.rfc-editor.org/search/rfc\_search\_detail.php)
+  [https://www.rfc-editor.org/search/rfc\_search\_detail.php](https://www.rfc-editor.org/search/rfc_search_detail.php)
 * JWT INFO\
   [https://jwt.io](https://jwt.io/)
 *   JWT (JSON Web Token) 이해와 활용

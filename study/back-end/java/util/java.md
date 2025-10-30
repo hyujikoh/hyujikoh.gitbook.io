@@ -38,7 +38,7 @@ public void fileTest(){
 }
 ```
 
-<img src="../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" data-size="original">
+<img src="../../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" data-size="original">
 
 파일은 각각의 id 값을 가지고 경로를 구성하고 있다. 패턴은 거의 일치 하니까 `/` 로 문자열을 분리 해보겠다. 그 안에서 `drive.google.com` 가 있는지 테스트 해보자
 
@@ -53,7 +53,7 @@ public void fileTest(){
 }
 ```
 
-<img src="../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="통과~" data-size="original">
+<img src="../../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="통과~" data-size="original">
 
 
 
@@ -127,9 +127,9 @@ public void fileAccessIsOk(){
 
 그렇게  테스트 를 하면 아래와 같이 브라우저로 접근이 가능한 파일 링크를 위와 같은 코드를 통해 접근이 가능해진다.
 
-<img src="../../../.gitbook/assets/image (4) (1) (1).png" alt="test file link" data-size="original">
+<img src="../../../../.gitbook/assets/image (4) (1) (1).png" alt="test file link" data-size="original">
 
-<img src="../../../.gitbook/assets/image (5) (1).png" alt="테스트 통과" data-size="original">
+<img src="../../../../.gitbook/assets/image (5) (1).png" alt="테스트 통과" data-size="original">
 
 
 
@@ -139,7 +139,7 @@ public void fileAccessIsOk(){
 
 역시 이를 위해 접근 제한 파일을 생성했다.
 
-<img src="../../../.gitbook/assets/image (6) (1).png" alt="" data-size="original">
+<img src="../../../../.gitbook/assets/image (6) (1).png" alt="" data-size="original">
 
 이 파일 URL 을 테스트코드를 작성하여 결과값을 403 으로 예상해보자
 
@@ -168,7 +168,7 @@ public void fileAccessIs404(){
 }
 ```
 
-<img src="../../../.gitbook/assets/image (7) (1).png" alt="" data-size="original">
+<img src="../../../../.gitbook/assets/image (7) (1).png" alt="" data-size="original">
 
 테스트 코드의 결과값은 200 이 나왔다. 그러면 전체 허용과, 제한된 허용 URL 에 대해서 res 가 어떻게 오는지 확인을 해보자
 
@@ -251,7 +251,7 @@ public void fileAccessIs403(){
 테스트 결과는 다음과 같이 나왔다!\
 
 
-<img src="../../../.gitbook/assets/image (9) (1).png" alt="" data-size="original">
+<img src="../../../../.gitbook/assets/image (9) (1).png" alt="" data-size="original">
 
 
 

@@ -68,7 +68,7 @@ private static void testHashtable(int operations) {
 
 테스트 결과는 다음과 같다.
 
-<figure><img src="../../../.gitbook/assets/image (21).png" alt=""><figcaption><p>테스트 결과</p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (21).png" alt=""><figcaption><p>테스트 결과</p></figcaption></figure>
 
 그렇다면 멀티 스레드 환경에서 둘의 성능을 한번 비교해보기 위해 테스트 코드를 작성해봤다.&#x20;
 
@@ -134,17 +134,17 @@ private void testHashtableMultiThread(int operations, int threadCount) throws In
 
 그래서 작업이 충돌이 일어났나 해서 여러번 다시 테스트 했을때 다음과 같이 결과가 나왔다.
 
-<figure><img src="../../../.gitbook/assets/image (24).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (24).png" alt=""><figcaption></figcaption></figure>
 
 그래서 다시 한번 돌려봤다.
 
-<figure><img src="../../../.gitbook/assets/image (25).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (25).png" alt=""><figcaption></figcaption></figure>
 
 이번에는 HashMap 이 더 빠르다고 나오는 상황까지 발생했다.
 
 아예 작업수를 1억을 할려니 메모리 초과를 오류가 발생되었다...
 
-<figure><img src="../../../.gitbook/assets/image (26).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (26).png" alt=""><figcaption></figcaption></figure>
 
 ### 그렇다면 HashMap 만 쓰면 되는것으로 마무리?
 
@@ -230,7 +230,7 @@ private void testHashtableMultiThreadDetail(int operations, int threadCount) thr
 
 결과는 다음과 같이 나왔다.
 
-<figure><img src="../../../.gitbook/assets/image (27).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (27).png" alt=""><figcaption></figcaption></figure>
 
 기대했던 대로 테스트가 제대로 통과가 되었다!
 
@@ -312,7 +312,7 @@ private void testConcurrentHashMapMultiThread(int operations, int threadCount) t
 }
 ```
 
-<figure><img src="../../../.gitbook/assets/image (28).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (28).png" alt=""><figcaption></figcaption></figure>
 
 결과가 이렇게 나오긴 한데, 사실 성능에 대해서 여러 레퍼런스를 찾아보기도 했지만, ConcurrentHashMap 이 좋다고 나온 것도 있어서, 지금 진행한 테스트가 환경(HW)에서는 저런 결과가 나오긴 한다. 보다 더 확실한 결과를 보기 위해서 연산을 1억 단위로 진행할려고 하니 아예 메모리 에러가 나오기도 한다.&#x20;
 
