@@ -4,16 +4,14 @@ hidden: true
 
 # 단위 테스트가 많을수록 좋을까? 🤔 피라미드 vs 트로피, 우리 팀에 맞는 전략 찾기
 
-
-
-
+### 서론. 이 글을 작성하게된 이유
 
 **잘 실패하는 테스트는 무엇일까요?**
 
 테스트 코드의 본질은 무엇일까? 단순히 버그를 찾아내거나 코드 커버리지를 높이는 것일까?
 
 테스트의 본질은 이걸 통해 검증하려던 것이 정말 검증이 되는가. 또 이것이 얼마나 민감하게 영향을 받느냐\
-중요하다 생각합니다 .
+중요하다 생각합니다.
 
 만약 원본 기능이 변했는데 테스트가 실패하지 않는다면, 해당 테스트는 제 역할을 하지 못한것 입니다.\
 변경에 민감하게 반응하는 테스트는 저희 서비스의 안정성을 보장하는 안정망이 될것입니다.
@@ -733,3 +731,33 @@ when(erpService).thenReturn(...)
 
 
 
+### **5. 다시 처음으로** <a href="#undefined" id="undefined"></a>
+
+지금까지 테스트 피라미드와 트로피, 두 가지 전략을 살펴봤습니다.
+
+**테스트 피라미드**: 단위 테스트 중심, 빠른 피드백\
+**테스팅 트로피**: 통합 테스트 중심, 높은 신뢰도
+
+어느 것이 더 나은지는 상황에 따라 다릅니다. 복잡한 계산 로직은 단위 테스트가, 도메인 간 협력은 통합 테스트가 더 적합합니다. (이것도 오히려 반대가 더 효과적일수도 있는 상황이 분명 존재할 것이라 생각합니다.)
+
+중요한 건 음식 레시피 처럼 비율을 맞추자 아니라 생각합니다.
+
+맨 처음에 이야기 했던 서론으로 [다시 되돌아 가봅니다. ](vs.md#id)
+
+> 만약 원본 기능이 변했는데 테스트가 실패하지 않는다면, 해당 테스트는 제 역할을 하지 못한것 입니다.
+
+단위든 통합이든, 피라미드든 트로피든, 가장 중요한 질문은 이것입니다:
+
+**"이 테스트가 실패하면, 실제 문제를 발견한 것인가?"**
+
+이 질문에 "그렇다"라고 대답할 수 있다면 좋은 테스트라고 생각합니다.
+
+
+
+#### **참고자료**
+
+* Martin Fowler - [Practical Test Pyramid](https://martinfowler.com/articles/practical-test-pyramid.html)
+* Kent C. Dodds - [Write tests. Not too many. Mostly integration.](https://kentcdodds.com/blog/write-tests)
+* Google Testing Blog - [Test Sizes](https://testing.googleblog.com/2010/12/test-sizes.html)
+* web.dev - [테스트 자동화의 세 가지 일반적인 유형 ](https://web.dev/articles/ta-types?hl=ko#testing_in_all_shapes_how_does_this_all_work_together)
+* web.dev - [피라미드 vs.게? 적절한 테스트 전략 찾기](https://web.dev/articles/ta-strategies?hl=ko)
