@@ -4,7 +4,11 @@ hidden: true
 
 # 단위 테스트가 많을수록 좋을까? 🤔 피라미드 vs 트로피, 우리 팀에 맞는 전략 찾기
 
-### **잘 실패하는 테스트는 무엇일까요?**
+
+
+
+
+**잘 실패하는 테스트는 무엇일까요?**
 
 테스트 코드의 본질은 무엇일까? 단순히 버그를 찾아내거나 코드 커버리지를 높이는 것일까?
 
@@ -18,13 +22,12 @@ hidden: true
 
 해당 글에서는 좋은 테스트를 작성하기 `단위 테스트`와 `통합 테스트`를 어떻게 전략적으로 분배해야 하는지에 대해 이야기해 보려 합니다.
 
-### **1부: 기초부터 시작하기 - 단위와 통합, 뭐가 다른 거야?** <a href="#undefined" id="undefined"></a>
+### **1. 기초부터 시작하기 - 단위와 통합, 뭐가 다른 거야?** <a href="#undefined" id="undefined"></a>
 
 사전 지식: 두 테스트의 차이점
 
 몇가지 단위 테스트를 작성했고 커버리지도 100% 달성 하였지만, 서로 연관된 도메인 끼리 상호작용을 하는 과정에서 에러가 터지는 경험을 간혹 겪곤 했습니다.\
-\
-(이미지 넣을까 고민중)
+
 
 **단위 테스트(Unit Test)**
 
@@ -68,7 +71,7 @@ void 등록된_할인율에_따라_주문가격이_할인된다.() {
 
 ```
 
-외부 의존성이 없고, 순수한 계산 로직을 검증하기 때문에 빠르고 명확하게 테스트가 가능합니다.
+해당 테스트는 외부 의존성이 없고, 순수한 계산 로직을 검증하기 때문에 빠르고 명확하게 테스트가 가능합니다.
 
 ```java
 // 통합 테스트가 적합한 경우: 여러 도메인의 협력
@@ -194,8 +197,6 @@ class OrderE2ETest {
 * **Spy**: 실제 객체를 감싸서 일부 동작만 감시
 * **Fake**: 단순화된 실제 구현 (예: In-Memory DB)
 
-
-
 결국 정리를 하자면 다음과 같습니다.
 
 **단위 테스트**: "이 함수가 올바른 값을 반환하나요?"
@@ -217,7 +218,7 @@ class OrderE2ETest {
 
 ***
 
-### **2부: 전통의 강자, '테스트 피라미드' 🔺**
+### **2. 전통의 강자, '테스트 피라미드' 🔺**
 
 ### 테스트를 몇 개나 써야 할까? 🤔
 
@@ -229,7 +230,7 @@ class OrderE2ETest {
 
 테스트 피라미드는 간단합니다. 이집트 피라미드처럼 **아래가 넓고 위로 갈수록 좁아지는** 구조입니다.
 
-<div data-with-frame="true"><figure><img src="../../.gitbook/assets/image.png" alt=""><figcaption><p>이미지 출처: <a href="https://martinfowler.com/articles/microservice-testing/#conclusion-test-pyramid">https://martinfowler.com/articles/microservice-testing/#conclusion-test-pyramid</a></p></figcaption></figure></div>
+<div data-with-frame="true"><figure><img src="../../.gitbook/assets/image (1).png" alt=""><figcaption><p>이미지 출처: <a href="https://martinfowler.com/articles/microservice-testing/#conclusion-test-pyramid">https://martinfowler.com/articles/microservice-testing/#conclusion-test-pyramid</a></p></figcaption></figure></div>
 
 단위, 통합 , E2E 기준으로
 
@@ -261,7 +262,7 @@ class OrderE2ETest {
 
 ### 실전 예시: 복잡한 할인 정책 계산 🏷️
 
-전자상거래 사이트에서 주문을 생성할 때 복잡한 할인 정책이 적용된다고 가정해 보겠습니다.
+이커머스 플랫폼에서 주문을 생성할 때 복잡한 할인 정책이 적용된다고 가정해 보겠습니다.
 
 아래에는 할인에 대한 가상의 요구사항을 정의 해보도록하겠습니다.
 
@@ -481,13 +482,254 @@ class OrderDiscountIntegrationTest {
 
 그래서 위와 같은 시나리오 기반 테스트를 한다고 했을때,  Mock 을 통해서 의존성을 최소한으로 하였습니다.
 
-이런 환경에서 단위 테스트로 모든 의존성을 Mock으로 대체하면:
+결국 피라미드 기반 환경에서 가장 비중을 자치하는 단위 테스트로 모든 의존성을 Mock으로 대체하면:
 
 * 실제 환경과 괴리가 생긴다
 * Mock 설정 코드가 테스트보다 길어진다
-* "테스트는 통과하는데 배포하면 터진다"
+* "테스트는 통과하는데 배포하면 터진다" = 운영은 실전이다.&#x20;
 
 이 문제를 해결하기 위해 다른 접근법을 소개하겠습니다.  🏆
+
+***
+
+### **3. 통합 테스트의 비중을 늘리자 - '테스팅 트로피' 🏆** <a href="#undefined" id="undefined"></a>
+
+앞서 이야기 했던, 피라미드 테스트 문제를 다시 한번 정리해보겠습니다.
+
+저희의 서비스의 테스트는 Mock 으로 대처하고 있고 이걸 코드로 나타내면 최악의 경우는 아래와 같이 나올수 있습니다.
+
+```java
+
+public class UnitTestClass {
+    // 의존성이 많아지면 많아질수록 mock 객체가 늘어난다.
+    @Mock private UserRepository userRepository;
+    @Mock private EmailService emailService;
+    @Mock private SmsService smsService;
+    @Mock private PaymentGateway paymentGateway;
+    @Mock private InventoryService inventoryService;
+    @Mock private OrderRepository orderRepository;
+    @Mock private CouponRepository couponRepository;
+    
+    /**
+    *  이하 테스트 시나리오 기반 메소드
+    *
+    /
+}
+```
+
+결과적으로 Mock 설정 코드가 실제 비즈니스 로직보다 길어지고, 테스트 코드의 가독성은 현저하게 떨어지게 됩니다.
+
+Vercel의 CEO인 Guillermo Rauch는 이렇게 말했습니다:
+
+> "Write tests. Not too many. Mostly integration."\
+> (테스트를 작성하세요. 너무 많지 않게. 대부분 통합 테스트로.)
+
+테스트는 여전히 중요합니다. 다만 선택과 집중을 하자는 말입니다.그것도 실제 환경과 유사한 통합 테스트에 집중을 하자는 이야기 입니다.&#x20;
+
+Kent C. Dodds는 이를 발전시켜 **테스팅 트로피**를 제안했습니다.
+
+#### 테스팅 트로피 🏆
+
+테스팅 트로피는 피라미드와 모양이 다르게 가장 넓은 부분이 중간(통합 테스트)에 있습니다.
+
+<figure><img src="../../.gitbook/assets/DVUoM94VQAAzuws.jpg" alt=""><figcaption></figcaption></figure>
+
+#### 왜 통합 테스트에 집중할까? 💡
+
+Kent C. Dodds는 이렇게 제시했습니다.
+
+> "테스트가 소프트웨어 사용 방식과 유사할수록 더 신뢰할 수 있다."
+
+단위 테스트는 개별 함수가 올바른지 알려주지만, **실제 사용자가 경험하는 것**과는 거리가 멉니다.
+
+**예를 들어 다음과 같은 요구사항이 있다 가정합니다.**
+
+* 사용자는 "회원가입 버튼"을 누릅니다
+* 그러면 DB에 저장되고, 환영 이메일이 오고, 쿠폰이 발급됩니다
+
+이 전체 흐름이 정상 작동하는지 확인하는 것이 통합 테스트입니다.
+
+```java
+// 통합 테스트: 회원가입 전체 도메인 협력
+@SpringBootTest
+@Transactional
+class SignUpIntegrationTest {
+    
+    @Autowired  // 실제 Service 사용
+    private UserService userService;
+    
+    @Autowired  // 실제 Repository들 사용
+    private UserRepository userRepository;
+    
+    @Autowired
+    private CouponRepository couponRepository;
+    
+    @Autowired
+    private NotificationRepository notificationRepository;
+    
+    @MockBean  // 🎭 외부 이메일 서비스만 Mock
+    private EmailService emailService;
+    
+    @Test
+    @DisplayName("회원가입_시_쿠폰이_발급되고_환영_이메일이_발송된다")
+    void 회원가입_시_쿠폰이_발급되고_환영_이메일이_발송된다() {
+        // Given
+        SignUpRequest request = new SignUpRequest(
+            "newuser@test.com",
+            "password123",
+            "홍길동"
+        );
+        
+        // 🎭 Stub: 외부 이메일 서비스만 성공 응답 설정
+        doNothing().when(emailService).sendWelcomeEmail(any());
+        
+        // When: 실제 회원가입 로직 실행 (여러 도메인 협력)
+        User user = userService.signUp(request);
+        
+        // Then: 사용자가 실제 DB에 저장되었는지
+        User savedUser = userRepository.findByEmail("newuser@test.com").get();
+        assertThat(savedUser.getName()).isEqualTo("홍길동");
+        assertThat(savedUser.getStatus()).isEqualTo(UserStatus.ACTIVE);
+        
+        // Then: 가입 축하 쿠폰이 자동 발급되었는지
+        List<Coupon> coupons = couponRepository.findByUserId(user.getId());
+        assertThat(coupons).hasSize(1);
+        assertThat(coupons.get(0).getType()).isEqualTo(CouponType.WELCOME);
+        assertThat(coupons.get(0).getAmount()).isEqualTo(Money.wons(10000));
+        
+        // Then: 알림이 생성되었는지
+        Notification notification = notificationRepository.findByUserId(user.getId()).get();
+        assertThat(notification.getType()).isEqualTo(NotificationType.WELCOME);
+        
+        // 🎭 Mock 검증: 외부 이메일이 발송되었는지
+        verify(emailService).sendWelcomeEmail(
+            argThat(email -> email.getTo().equals("newuser@test.com"))
+        );
+    }
+    
+    @Test
+    @DisplayName("이미_가입된_이메일로는_회원가입할_수_없다")
+    void 이미_가입된_이메일로는_회원가입할_수_없다() {
+        // Given: 이미 가입된 사용자
+        userRepository.save(
+            User.builder()
+                .email("existing@test.com")
+                .name("기존회원")
+                .build()
+        );
+        
+        SignUpRequest duplicateRequest = new SignUpRequest(
+            "existing@test.com",
+            "password123",
+            "중복회원"
+        );
+        
+        // When & Then: 중복 이메일 예외 발생
+        assertThatThrownBy(() -> userService.signUp(duplicateRequest))
+            .isInstanceOf(DuplicateEmailException.class)
+            .hasMessage("이미 가입된 이메일입니다");
+        
+        // Then: 쿠폰이나 알림이 생성되지 않았는지 확인
+        assertThat(couponRepository.findAll()).isEmpty();
+    }
+}
+
+```
+
+이 테스트 하나로:
+
+* User 도메인 (회원 정보 저장)
+* Coupon 도메인 (쿠폰 자동 발급)
+* Notification 도메인 (알림 생성)
+* Email 외부 시스템 (환영 메일)
+
+**네 가지가 함께 잘 동작하는지** 검증합니다.
+
+피라미드 와 트로피 테스팅을 구분하자면 다음과 같이 정리할수 있습니다.
+
+<table><thead><tr><th width="121">구분</th><th>테스트 피라미드</th><th>테스팅 트로피</th></tr></thead><tbody><tr><td>철학</td><td>"빠르고 저렴한" 단위 테스트 기반</td><td>"실제와 유사한" 통합 테스트 기반</td></tr><tr><td>주력 테스트</td><td>단위 테스트 70%</td><td>통합 테스트 70%</td></tr><tr><td>Mock 사용</td><td>단위에서 모든 것 Mock</td><td>통합에서 외부만 Mock</td></tr><tr><td>리팩토링</td><td>단위 테스트 많이 수정 필요</td><td>통합 테스트는 비교적 안정적</td></tr><tr><td>신뢰도</td><td>개별 로직은 정확하지만 협력은 불확실</td><td>실제 환경과 유사하여 높은 신뢰도</td></tr><tr><td>적합한 환경</td><td>외부 의존성 적은 라이브러리</td><td>MSA, 복잡한 도메인 협력</td></tr></tbody></table>
+
+#### 트로피가 효과적인 상황
+
+**아래와 같은 서비스 구성이 되어있다면 트로피 테스팅이 좋습니다.**
+
+1. **도메인 간 협력이 복잡할 때**
+   * 주문 → 결제 → 재고 → 알림이 연쇄적으로 발생
+   * 회원가입 → 쿠폰 발급 → 이메일 발송
+2. **마이크로서비스 환경**
+   * 서비스 간 API 호출이 많음
+   * 실제 연동 테스트가 중요
+3. **레거시 시스템 개선 중**
+   * 기존 코드가 단위 테스트하기 어려운 구조
+   * 먼저 통합 테스트로 보호막 구축
+4. **비즈니스 로직보다 연동이 중요할 때**
+   * CRUD 중심 애플리케이션
+   * API 게이트웨이, BFF(Backend for Frontend)
+
+***
+
+그렇다고 단위테스트를 소홀히 하자는것이 아니라 20%의 단위테스트의 선택과 집중, 즉 핵심적인 단위 테스팅을 구성해 내가 증명하고 싶은 기능에 대해 검증을 하자는 이야기 입니다.
+
+**단위 테스트가 여전히 필요한 경우는 다음과 같습니다.**
+
+* 복잡한 알고리즘 (할인 계산, 정산 로직)
+* 순수 함수 (날짜 계산, 문자열 변환)
+* 유틸리티 클래스
+* 도메인 모델의 비즈니스 규칙
+
+
+
+***
+
+### **4. 실전에서 고민했던 것들 (제조업 도메인)🤔** <a href="#undefined" id="undefined"></a>
+
+### 결국 돌아오는 질문
+
+피라미드도 알겠고, 트로피도 이해를 하지만 어떤 순간에 어떤 방법을 이용해 작성하는건 항상 고민이었습니다.
+
+"이 기능은 단위 테스트? 통합 테스트?"
+
+그래서 TDD 및 요구사항 문서를 정의 를 통해  나름의 판단 기준이 생겼습니다.
+
+***
+
+**상황 1: 생산 가능 수량 계산 로직 개발할 때**
+
+```
+// 자재 재고, BOM, 공정별 필요 수량... 
+// 계산 케이스가 30가지 넘게
+```
+
+이 부분은 처음 통합 테스트로 작성하였습니다. 하지만 DB에서 BOM 정보, 재고 정보 조회하다 보니 실행하는데 오래&#x20;
+
+그래서 해당 테스트를 단위 테스트로 바꿨습니다. 필요한 데이터를 Given에서 직접 만들어서 전달하고 요구사항에 정의된 계산 방식으로 수량이  일치하는것에 대해서만 검증하면 되는것이었습니다.
+
+외부 의존성 없는 순수한 계산 로직은 단위가 좋다는 경험을 한 순간이었습니다.
+
+**상황 2: 발주 및 입고 프로세스 만들 때**
+
+```
+// 발주 계획 -> 입고 → 품질검사 → 재고등록 → 생산계획 업데이트 → ERP 전송
+```
+
+이 기능은 오히려 단위 테스트로 짜기 시작했는데, Mock 설정하는 코드가 실제 로직보다 3배 길어졌습니다.
+
+```
+when(materialRepository).thenReturn(...)
+when(qualityRepository).thenReturn(...)
+when(inventoryRepository).thenReturn(...)
+when(erpService).thenReturn(...)
+// 계속 반복...
+```
+
+이 부분은 오히려 하나의 프로세스를 통해 입고 프로세스의 통합 시나리오로 신뢰도를 보장하였습니다.&#x20;
+
+결국 이런 흐름이 아래와 같이 단순하게 테스트 구성을 하게 되었습니다.
+
+* mock 이 너무 많은 테스트 일것 같다 -> 통합 테스트
+* DB 연결해서 테스트 하는것 보다 도메인 객체의 책임이 명확하고 정합성을 확인하고 싶다 -> 단위 테스트
+
+물론 이런 방식이 실제 서비스 운영에 민감하게 반응하지 않는 테스트 코드일때도 있어서, 항상 팀원들하고 고민하고 결정을 하는 편입니다.
 
 
 

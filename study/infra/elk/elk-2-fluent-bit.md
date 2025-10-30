@@ -19,12 +19,12 @@ hidden: true
    (ex. K8S 내 파드 기반 서비스, 람다 기반 앱 서비스 등등)
 {% endhint %}
 
-<figure><img src="../../../.gitbook/assets/image (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 1. logstash 와 , 쿠버네티스 기반 앱 서비스 모니터링을 동시에 하고 싶음,&#x20;
 2. 모니터링 구조와 그런걸 구성
 
 <figure><img src="../../../.gitbook/assets/image(2).png" alt=""><figcaption></figcaption></figure>
 
-<figure><img src="../../../.gitbook/assets/image (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 

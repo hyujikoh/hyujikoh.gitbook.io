@@ -70,7 +70,7 @@ list 의 길이를 `10000` 으로 했을때 다음과 같은 결과가 나온다
 
 list 의 길이를 `10000000` 으로 했을때는 성능 결과는 다음과 같다.
 
-<div align="left"><figure><img src="../../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption><p>list size가 <code>10000000</code> 일때 각각 테스트 결과</p></figcaption></figure></div>
+<div align="left"><figure><img src="../../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption><p>list size가 <code>10000000</code> 일때 각각 테스트 결과</p></figcaption></figure></div>
 
 결과만 봤을때는 for 문이 스트림보다 성능이 더 좋다. 그렇다면 왜 스트림을 사용하는 걸까?
 
@@ -164,7 +164,7 @@ public void forStream_ver2(){
 ```
 
 테스트 결과는 다음과 같이 나온다!\
-![](<../../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png>)
+![](<../../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png>)
 
 이전 테스트 에서 분명 성능이 더 좋았던 for-loop 가 변수 타입을 참조 타입으로 변경했을뿐인데, 이전 결과가 역전이 되어버린것이었다.
 
