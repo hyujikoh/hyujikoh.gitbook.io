@@ -438,7 +438,7 @@ verify(spyService, never()).executeTask3();
 
 ### 테스트 결과
 
-<figure><img src="../../../.gitbook/assets/image.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (1).png" alt=""><figcaption></figcaption></figure>
 
 **테스트 결과** 다음과 같이 Task4가 스레드를 점유하고 10초 동안 다른 작업들이 한 번도 실행되지 않고,  **단일 스레드 스케줄러의 블로킹 현상을 재연하였습니다.**
 
