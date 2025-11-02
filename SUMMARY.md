@@ -66,7 +66,7 @@
 * [🖋️ Tech](study/tech/README.md)
   * [단위 테스트가 많을수록 좋을까? 🤔 피라미드 vs 트로피, 우리 팀에 맞는 전략 찾기](study/tech/vs.md)
 * [📓 WIL](study/wil/README.md)
-  * [WIL: 오늘도 우리의 과일은 신선한가요? (aka. 우리의 테스트 코드는 바로 검증이 가능한걸까요?)](study/wil/wil-aka..md)
+  * [WIL: 오늘도 우리의 과일은 신선한가요? (aka 우리의 테스트 코드는 바로 검증이 가능한걸까요?)](study/wil/fresh-fruit.md)
 
 ## REVIEW
 
