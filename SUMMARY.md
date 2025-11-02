@@ -65,6 +65,8 @@
       * [JWT with Java Spring 프로젝트 만들기(2) 토큰 유효성 검증](study/back-end/undefined/jwt/jwt-with-java-spring-2.md)
 * [🖋️ Tech](study/tech/README.md)
   * [단위 테스트가 많을수록 좋을까? 🤔 피라미드 vs 트로피, 우리 팀에 맞는 전략 찾기](study/tech/vs.md)
+* [📓 WIL](study/wil/README.md)
+  * [WIL: 오늘도 우리의 코드는 신선한가요?](study/wil/wil.md)
 
 ## REVIEW
 
