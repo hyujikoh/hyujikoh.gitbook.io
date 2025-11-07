@@ -26,7 +26,7 @@ hidden: true
 
 
 
-## 1. 멱등함의 기초
+## 멱등함의 기초
 
 멱등성은 수학 개념입니다.
 
@@ -522,7 +522,7 @@ void concurrentHashMap_멱등성_테스트() throws InterruptedException {
 
 
 
-## 2. 멱등성, 동시성?&#x20;
+## 멱등성, 동시성?&#x20;
 
 ### 멱등성에서 나온 고민 <a href="#id-21" id="id-21"></a>
 
@@ -536,7 +536,7 @@ void concurrentHashMap_멱등성_테스트() throws InterruptedException {
 
 멱등성 공부를 할수록 동시성이라는 개념이 계속 등장했습니다. 둘의 관계가 뭘까요?
 
-### 두 개념의 정의 정리 <a href="#id-22" id="id-22"></a>
+### 두 개념의 정의 <a href="#id-22" id="id-22"></a>
 
 #### 멱등성 (Idempotency)
 
@@ -581,9 +581,9 @@ void concurrentHashMap_멱등성_테스트() throws InterruptedException {
 
 **멱등성 구현 시 동시성 제어가 필요합니다.**
 
-멱등성을 구현할 때 멱등성 키를 저장하는 맵(Map)을 사용합니다.
+예시 코드 기반 멱등성을 구현할 때 멱등성 키를 저장하는 맵(Map)을 사용을하였습니다.
 
-만약 두 스레드가 동시에 멱등성 키를 확인한다면?
+만약 두 스레드가 동시에 멱등성 키를 확인한다면 어떻게 될까요?
 
 ```java
 // 문제 상황
@@ -596,16 +596,460 @@ processedRequests.put(key, result); // 저장
 
 ```
 
-두 스레드가 "동시에" 같은 키를 확인하고 둘 다 처리할 수 있습니다.
+두 스레드가 동시에 같은 키를 확인하고 둘 다 처리할 수 있습니다.
 
 따라서 멱등성 키 자체는 **`ConcurrentHashMap`, `synchronized`** 등의 동시성 제어 기법을 사용해야 합니다.
 
-두 개념의 명확한 차이점을 정리하면 다음과 같습니다.
+또한 두 개념의 명확한 차이점을 정리하면 다음과 같습니다.
 
 <table><thead><tr><th width="149.5">구분</th><th width="207.5">멱등성</th><th width="259">동시성 제어</th></tr></thead><tbody><tr><td>해결하는 문제</td><td>중복 요청 재처리</td><td>동시 접근 데이터 충돌</td></tr><tr><td>발생 타이밍</td><td>시간 간격 있음</td><td>밀리초 단위 동시</td></tr><tr><td>원인</td><td>네트워크, 사용자 실수</td><td>멀티스레드 경쟁</td></tr><tr><td>구현 방식</td><td>멱등성 키, 상태 체크</td><td>Lock, synchronized, CAS</td></tr><tr><td>예방 대상</td><td>반복된 요청</td><td>동시 실행</td></tr></tbody></table>
 
-결국 두개를 나누어져야 하는게 아니라 케이스 별로 구분하여 코드로 구체화를 해야합니다.
+#### 구체적 예시
 
-####
+* **멱등성만 필요한 경우**
 
-* 멱등성만 필요한 경우
+```
+// 단일 스레드 환경
+public PaymentResponse pay(String idempotencyKey) {
+    if (alreadyProcessed(idempotencyKey)) {
+        return getCachedResult(idempotencyKey); // 이전 결과 반환
+    }
+    processPayment();
+    cacheResult(idempotencyKey);
+}
+```
+
+
+
+* **동시성 제어만 필요한 경우**
+
+```
+// 같은 요청이 안 오지만 여러 스레드가 다른 작업을 동시에 함
+public synchronized void decreaseStock(int quantity) {
+    if (stock >= quantity) {
+        stock -= quantity; // 동시 접근 시 보호 필요
+    }
+}
+```
+
+
+
+* **둘 다 필요한 경우**
+
+```
+// 멱등성 키를 안전하게 관리하려면 동시성 제어도 필요
+public synchronized PaymentResponse pay(String idempotencyKey) {
+    if (processedRequests.containsKey(idempotencyKey)) {
+        return processedRequests.get(idempotencyKey); // 멱등성
+    }
+    processPayment();
+    processedRequests.put(idempotencyKey, response); // 동시성 안전
+}
+```
+
+***
+
+정리를 하자면 멱등성 ≠ 동시성 은 같은 의미도 아니고 비슷한 맥락도 아니였습니다.\
+멱등성 자체는 동시성 제어가 아니고, 동시성 제어가 멱등성을 제공하는 것도 아닙니다.
+
+* **멱등성**: "같은 요청"을 여러 번 받아도 한 번만 처리
+* **동시성 제어**: "다른 스레드"가 동시에 접근해도 데이터 정합성 보장
+
+그렇다면 동시성 제어를 쓰는 케이스에 대해서 확인해보겠습니다.
+
+
+
+## 커머스로 배우는 동시성 제어 <a href="#part-3" id="part-3"></a>
+
+
+
+### 동시성 문제란 <a href="#id-31" id="id-31"></a>
+
+멱등성은 "반복된 요청"을 다루는 개념입니다.
+
+동시성 문제는 다릅니다. **같은 자원에 여러 스레드가 동시에 접근**할 때 발생합니다.
+
+#### Race Condition (경쟁 상태)
+
+가장 흔한 동시성 문제는 **Race Condition**입니다.
+
+두 스레드가 동시에 같은 값을 읽고 각각 수정한 후 저장할 때, 한 스레드의 수정이 다른 스레드의 수정을 덮어쓰는 상황입니다.
+
+### 동시성 충돌: 상품 재고 차감
+
+온라인 쇼핑몰에서 한정판 상품 100개가 오픈되었습니다.
+
+정확히 12시에 1,000명이 동시에 "구매하기" 버튼을 클릭합니다.
+
+**이상적인 상황**:
+
+* 100명은 구매 성공
+* 900명은 "재고 없음" 메시지
+
+**Race Condition 발생 시**:
+
+* 110명이 구매 성공
+* 890명은 구매 성공
+
+***
+
+동시성 제어가 없을 경우에 대해 동시에 100 건의 구매에 대한 재고의 정합성을 테스트를 해봤습니다.
+
+```java
+public class Product {
+    private Long id;
+    private String name;
+    private int stock;
+    
+    public Product(Long id, String name, int initialStock) {
+        this.id = id;
+        this.name = name;
+        this.stock = initialStock;
+    }
+    
+    // 동시성 제어 없음
+    public void decreaseStockUnsafe(int quantity) {
+        if (stock >= quantity) {
+            // 시뮬레이션: 실제 처리 시간
+            try {
+                Thread.sleep(1);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            stock -= quantity; // Race Condition 발생 지점
+        }
+    }
+    
+    public int getStock() {
+        return stock;
+    }
+}
+
+
+@Test
+@DisplayName("동시성 제어 없으면 재고가 초과 판매됨")
+void race_condition_재현_테스트() throws InterruptedException {
+    // Given: 한정판 상품 100개
+    Product product = new Product(1L, "한정판 운동화", 100);
+    // When: 100명이 동시에 1개씩 구매
+    ConcurrencyTestHelper.executeConcurrently(100, () -> {
+        product.decreaseStockUnsafe(1);
+    });
+    
+    System.out.printf("남은 재고: %d%n", product.getStock());
+
+
+    // 재고는 0 동시성 이슈 떄문에 0 이 안나옴
+    assertNotEquals(0, product.getStock());
+}
+
+
+```
+
+
+
+결과는 기대했던대로 나왔습니다.
+
+<div align="left"><figure><img src="../../.gitbook/assets/image (49).png" alt=""><figcaption></figcaption></figure></div>
+
+100명이 1개씩 100번 구매했는데 재고가 4개가 남았고. 96**개만 차감되었습니다.**
+
+> 시간 T1: 스레드 A가 재고 100 읽음\
+> 시간 T2: 스레드 B가 재고 100 읽음 (동시!)\
+> 시간 T3: 스레드 C가 재고 100 읽음 (동시!)\
+> ...\
+> 시간 T51: 스레드 A가 재고 99로 업데이트\
+> 시간 T52: 스레드 B가 재고 99로 업데이트 (덮어씀!)\
+> 시간 T53: 스레드 C가 재고 99로 업데이트 (덮어씀!)
+
+이런 식으로 여러 스레드가 원자성 있는 초기화 값을 읽지 않았으므로, \
+결과적으로 남는 재고 데이터가 존재하는 상황이 발생합니다.
+
+앞서 멱등성에 적용한 기법을 동일하게 한번 동시성 제어에도 적용하여 테스트 해봤습니다.
+
+
+
+#### Synchronized <a href="#id-33---synchronized" id="id-33---synchronized"></a>
+
+```java
+public class SynchronizedProduct {
+    private Long id;
+    private String name;
+    private int stock;
+    
+    public SynchronizedProduct(Long id, String name, int initialStock) {
+        this.id = id;
+        this.name = name;
+        this.stock = initialStock;
+    }
+    
+    // synchronized로 보호
+    public synchronized boolean decreaseStock(int quantity) {
+        if (stock >= quantity) {
+            // 시뮬레이션
+            try {
+                Thread.sleep(1);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            stock -= quantity;
+            return true;
+        }
+        return false; // 재고 부족
+    }
+    
+    public int getStock() {
+        return stock;
+    }
+}
+
+@Test
+@DisplayName("synchronized로 재고를 정확히 관리")
+void synchronized_재고_관리_테스트() throws InterruptedException {
+    // Given: 한정판 상품 100개
+    SynchronizedProduct product = new SynchronizedProduct(1L, "한정판 운동화", 100);
+    
+    // When: 100명이 동시에 1개씩 구매
+    AtomicInteger successCount = new AtomicInteger(0);
+    
+    ConcurrencyTestHelper.executeConcurrently(100, () -> {
+        if (product.decreaseStock(1)) {
+            successCount.incrementAndGet();
+        }
+    });
+    
+    // Then: 100명 모두 성공, 재고 0
+    assertEquals(100, successCount.get());
+    assertEquals(0, product.getStock());
+}
+```
+
+***
+
+#### ReentrantLock <a href="#id-34---reentrantlock" id="id-34---reentrantlock"></a>
+
+```java
+public class LockProduct {
+    private Long id;
+    private String name;
+    private int stock;
+    private final ReentrantLock lock = new ReentrantLock(true); // 공정성 모드
+    
+    public LockProduct(Long id, String name, int initialStock) {
+        this.id = id;
+        this.name = name;
+        this.stock = initialStock;
+    }
+    
+    public boolean decreaseStock(int quantity) throws InterruptedException {
+        // 2초 타임아웃으로 락 획득 시도
+        if (!lock.tryLock(2, TimeUnit.SECONDS)) {
+            throw new TimeoutException("재고 처리 타임아웃");
+        }
+        
+        try {
+            if (stock >= quantity) {
+                // 시뮬레이션
+                try {
+                    Thread.sleep(1);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                stock -= quantity;
+                return true;
+            }
+            return false;
+        } finally {
+            lock.unlock(); // 반드시 해제
+        }
+    }
+    
+    public int getStock() {
+        return stock;
+    }
+}
+
+@Test
+@DisplayName("ReentrantLock으로 재고를 정확히 관리")
+void reentrantLock_재고_관리_테스트() throws InterruptedException {
+    // Given: 한정판 상품 100개
+    LockProduct product = new LockProduct(1L, "한정판 운동화", 100);
+    
+    // When: 100명이 동시에 1개씩 구매
+    AtomicInteger successCount = new AtomicInteger(0);
+    
+    ConcurrencyTestHelper.executeConcurrently(100, () -> {
+        try {
+            if (product.decreaseStock(1)) {
+                successCount.incrementAndGet();
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    });
+    
+    // Then
+    assertEquals(100, successCount.get());
+    assertEquals(0, product.getStock());
+}
+```
+
+***
+
+#### AtomicInteger (CAS) <a href="#id-36---atomicinteger-cas" id="id-36---atomicinteger-cas"></a>
+
+```java
+public class AtomicProduct {
+    private Long id;
+    private String name;
+    private final AtomicInteger stock;
+    
+    public AtomicProduct(Long id, String name, int initialStock) {
+        this.id = id;
+        this.name = name;
+        this.stock = new AtomicInteger(initialStock);
+    }
+    
+    public boolean decreaseStock(int quantity) {
+        while (true) {
+            int currentStock = stock.get();
+            
+            if (currentStock < quantity) {
+                return false; // 재고 부족
+            }
+            
+            // CAS: 현재값이 currentStock이면 (currentStock - quantity)로 업데이트
+            if (stock.compareAndSet(currentStock, currentStock - quantity)) {
+                return true; // 성공
+            }
+            // 실패하면 루프 반복 (다시 시도)
+        }
+    }
+    
+    public int getStock() {
+        return stock.get();
+    }
+}
+
+
+@Test
+@DisplayName("AtomicInteger로 재고 관리")
+void atomic_재고_관리_테스트() throws InterruptedException {
+    // Given
+    AtomicProduct product = new AtomicProduct(1L, "한정판 운동화", 100);
+    
+    // When: 100명이 동시에 1개씩 구매
+    AtomicInteger successCount = new AtomicInteger(0);
+    
+    ConcurrencyTestHelper.executeConcurrently(100, () -> {
+        if (product.decreaseStock(1)) {
+            successCount.incrementAndGet();
+        }
+    });
+    
+    // Then
+    assertEquals(100, successCount.get());
+    assertEquals(0, product.getStock());
+}
+```
+
+***
+
+#### ConcurrentHashMap <a href="#id-37---concurrenthashmap" id="id-37---concurrenthashmap"></a>
+
+```java
+public class Coupon {
+    private final String name;
+    private final AtomicInteger remainingCount;
+    
+    public Coupon(String name, int initialCount) {
+        this.name = name;
+        this.remainingCount = new AtomicInteger(initialCount);
+    }
+    
+    public boolean issue() {
+        while (true) {
+            int current = remainingCount.get();
+            
+            if (current <= 0) {
+                return false; // 쿠폰 소진
+            }
+            
+            if (remainingCount.compareAndSet(current, current - 1)) {
+                return true;
+            }
+        }
+    }
+    
+    public int getRemainingCount() {
+        return remainingCount.get();
+    }
+}
+
+public class CouponManager {
+    private final ConcurrentHashMap<String, Coupon> coupons 
+        = new ConcurrentHashMap<>();
+    
+    public CouponManager() {
+        // 여러 쿠폰 등록
+        coupons.put("신규가입_10%", new Coupon("신규가입_10%", 100));
+        coupons.put("생일_20%", new Coupon("생일_20%", 50));
+        coupons.put("추천_5%", new Coupon("추천_5%", 200));
+    }
+    
+    public boolean issueCoupon(String couponName) {
+        Coupon coupon = coupons.get(couponName);
+        
+        if (coupon == null) {
+            return false;
+        }
+        
+        return coupon.issue();
+    }
+    
+    public int getRemainingCount(String couponName) {
+        Coupon coupon = coupons.get(couponName);
+        return coupon != null ? coupon.getRemainingCount() : -1;
+    }
+}
+
+// 테스트
+@Test
+@DisplayName("ConcurrentHashMap으로 여러 쿠폰 동시 발급")
+void concurrentHashMap_쿠폰_발급_테스트() throws InterruptedException {
+    // Given
+    CouponManager manager = new CouponManager();
+    
+    // When: 100명이 동시에 "신규가입_10%" 쿠폰 요청
+    AtomicInteger successCount = new AtomicInteger(0);
+    
+    ConcurrencyTestHelper.executeConcurrently(150, () -> {
+        if (manager.issueCoupon("신규가입_10%")) {
+            successCount.incrementAndGet();
+        }
+    });
+    
+    // Then: 100명만 발급 (초과 요청은 실패)
+    assertEquals(100, successCount.get());
+    assertEquals(0, manager.getRemainingCount("신규가입_10%"));
+}
+```
+
+위와 같은 테스트의 결과는 의도 한 대로 전부 통과가 되었습니다.&#x20;
+
+<div align="left"><figure><img src="../../.gitbook/assets/image (50).png" alt=""><figcaption></figcaption></figure></div>
+
+***
+
+#### 정리&#x20;
+
+우리가 흔히 접할수 있는 커머스 도메인을 예시로 들어 동시성 제어하는 기법을 적용을 해봤습니다.
+
+물론 지금은 예시 상황이라서 실제 비즈니스 요구사항을 충족을 하는건 절대 아니지만, 최소한의 단위 시나리오를 통해
+
+어떤 방식으로 동시성 제어하는지 이해하고자 작성한 로직였습니다.
+
+그러면 실제 제가 속한 도메인인 제조업에서도 멱등성과 동시성을 제어 해야하는 요구사항을 분석해봤습니다.
+
+
+
