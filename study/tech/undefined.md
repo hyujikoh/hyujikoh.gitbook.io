@@ -1131,7 +1131,9 @@ ConcurrentHashMap은 **버킷별 독립 락** 사용
 
 
 
-#### 구현 코드 프로젝트 : [https://github.com/hyujikoh/concurrency\_idempotent](https://github.com/hyujikoh/concurrency_idempotent)
+#### 구현 프로젝트&#x20;
+
+{% embed url="https://github.com/hyujikoh/concurrency_idempotent" %}
 
 ## 참고 문서
 
