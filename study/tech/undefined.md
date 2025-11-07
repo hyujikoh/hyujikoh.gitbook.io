@@ -10,28 +10,13 @@ hidden: true
 
 프로젝트 요구사항을 정의하고 시퀀스 다이어그램을 작성하던 중, 멱등성이 필요한 상황을 인지하게 되었습니다. 이를 해결하기 위해 멱등함을 구체화하는 여러 방법을 예제 시나리오로 구현하고 적용해봤습니다.
 
-그 과정에서 멱등함을 공부하다 **동시성 제어**와 유사하다는 느낌을 받게 되었고, 두 개념의 차이를 명확히 하기 위해 이 글을 작성했습니다.
-
-### 글의 구성
-
-이 글에서는
-
-1. **멱등성 기초**: 멱등함이 무엇이고 어떻게 구현하는지
-2. **혼동과 발견**: 멱등함과 동시성 제어의 차이점
-3. **커머스로 배우기**: 친숙한 예제를 통한 동시성 제어 학습
-4. **MES에 적용하기**: 제조업 환경에서의 실제 사례
-5. **배운 점 정리**: 도메인별 최적 기법 선택
-
-최소한의 코드 베이스로 두 개념을 명확히 이해하는 과정을 기록하였습니다.
-
-
+그 과정에서 멱등함을 공부하다 **동시성 제어**와 유사하다는 느낌을 받게 되었고, \
+두 개념의 차이를 공부하는 과정에서 도달한 최종 결론에 대해서 공유 하고자 글을 작성하였습니다.
 
 ## 멱등함의 기초
 
-멱등성은 수학 개념입니다.
-
-**여러 번 연산을 수행해도 결과가 변경되지 않는 성질**을 의미합니다.
-
+멱등성은 수학 개념입니다.\
+**여러 번 연산을 수행해도 결과가 변경되지 않는 성질**을 의미합니다.\
 수학적으로 표현하면  `f(f(x)) = f(x)`
 
 #### 예시
@@ -48,7 +33,7 @@ hidden: true
 
 
 
-### 멱등성 해결하기 with java <a href="#id-13" id="id-13"></a>
+### 멱등성 해결하기 with Java <a href="#id-13" id="id-13"></a>
 
 멱등성을 해결하는 가장 기본적인 방법은 멱등성 키(Idempotency Key) 를 도입하는 것입니다.
 
@@ -246,9 +231,7 @@ public class ConcurrencyTestHelper {
 }
 ```
 
-#### ReentrantLock - 더 세밀한 제어
-
-**개념 설명**
+#### ReentrantLock 를 이용한 더 세밀한 제어
 
 `ReentrantLock`은 `Lock` 인터페이스를 구현한 클래스입니다.
 
@@ -265,13 +248,10 @@ public class ConcurrencyTestHelper {
 * 코드가 복잡함 (try-finally 필수)
 * synchronized 대비 세밀한 제어
 
-
-
 예시 코드와 테스트 코드는 아래와 같이 작성하였습니다.
 
 ```java
 // ReentrantLock 서비스 코드
-
 @Service
 public class LockPaymentService {
     
@@ -339,8 +319,6 @@ void reentrantLock_멱등성_테스트() throws InterruptedException {
 ```
 
 #### AtomicInteger - 락 없는 연산
-
-**개념 설명**
 
 `AtomicInteger`는 **CAS(Compare-And-Swap)** 알고리즘을 사용하여 락 없이 원자적 연산을 보장합니다.
 
@@ -426,8 +404,6 @@ void atomic_멱등성_테스트() throws InterruptedException {
 
 #### ConcurrentHashMap - 스레드 안전한 맵
 
-**개념 설명**
-
 `ConcurrentHashMap`은 내부적으로 버킷별 락을 사용합니다.
 
 일반적으로 많이 사용하는 `HashMap`과 달리 여러 스레드가 서로 다른 버킷에 동시에 접근할 수 있으므로 높은 동시성을 제공합니다. 읽기는 완전히 락 없이 진행되므로 매우 빠릅니다.
@@ -503,18 +479,16 @@ void concurrentHashMap_멱등성_테스트() throws InterruptedException {
 
 앞서 테스트 코드 기반으로 멱등성을 처리하는 방법에 대해 여러 방법을 적용 및 시도를 해봤습니다.&#x20;
 
-| 기법                | 구현 복잡도 | 성능    | 사용 시기          |
-| ----------------- | ------ | ----- | -------------- |
-| synchronized      | 간단     | 낮음    | 단순 케이스         |
-| ReentrantLock     | 복잡     | 중간    | 타임아웃, 공정성 필요   |
-| AtomicInteger     | 간단     | 매우 높음 | 카운터, 간단한 연산    |
-| ConcurrentHashMap | 간단     | 높음    | 캐시, 맵 (가장 실용적) |
+| 기법                | 구현 복잡도 | 성능    | 사용 시기        |
+| ----------------- | ------ | ----- | ------------ |
+| synchronized      | 간단     | 낮음    | 단순 케이스       |
+| ReentrantLock     | 복잡     | 중간    | 타임아웃, 공정성 필요 |
+| AtomicInteger     | 간단     | 매우 높음 | 카운터, 간단한 연산  |
+| ConcurrentHashMap | 간단     | 높음    | 캐시, 맵        |
 
 이렇게 각 기법을 적용하고 코드를 만들던 도중 의구심이 드는것이 하나 있습니다.
 
 **"결국 멱등성이랑 동시성이랑 비슷한 맥락이 아닌가?"**&#x20;
-
-
 
 ## 멱등성, 동시성?&#x20;
 
@@ -528,7 +502,7 @@ void concurrentHashMap_멱등성_테스트() throws InterruptedException {
 
 **"어? 이건 멱등성인가, 동시성인가?"**
 
-멱등성 공부를 할수록 동시성이라는 개념이 계속 등장했습니다. 둘의 관계가 뭘까요?
+멱등성 공부를 할수록 동시성이라는 개념이 계속 등장했습니다. 나중엔 뭐가 어떤건지 혼란스러웠습니다.
 
 ### 두 개념의 정의 <a href="#id-22" id="id-22"></a>
 
@@ -592,7 +566,7 @@ processedRequests.put(key, result); // 저장
 
 두 스레드가 동시에 같은 키를 확인하고 둘 다 처리할 수 있습니다.
 
-따라서 멱등성 키 자체는 **`ConcurrentHashMap`, `synchronized`** 등의 동시성 제어 기법을 사용해야 합니다.
+따라서 멱등성 키 자체는 **`ConcurrentHashMap`, `synchronized`** 등의 동시성 제어 기법이 사용가능합니다.
 
 또한 두 개념의 명확한 차이점을 정리하면 다음과 같습니다.
 
@@ -643,7 +617,7 @@ public synchronized PaymentResponse pay(String idempotencyKey) {
 
 ***
 
-정리를 하자면 멱등성 ≠ 동시성 은 같은 의미도 아니고 비슷한 맥락도 아니였습니다.\
+정리를 하자면 멱등성 ≠ 동시성, 즉 같은 의미도 아니고 비슷한 맥락도 아니였습니다.\
 멱등성 자체는 동시성 제어가 아니고, 동시성 제어가 멱등성을 제공하는 것도 아닙니다.
 
 * **멱등성**: "같은 요청"을 여러 번 받아도 한 번만 처리
@@ -1025,7 +999,7 @@ void concurrentHashMap_쿠폰_발급_테스트() throws InterruptedException {
 }
 ```
 
-위와 같은 테스트의 결과는 의도 한 대로 전부 통과가 되었습니다.&#x20;
+위와 같은 테스트의 결과는 기대한 대로 나왔습니다.&#x20;
 
 <div align="left"><figure><img src="../../.gitbook/assets/image (50).png" alt=""><figcaption></figcaption></figure></div>
 
@@ -1135,3 +1109,40 @@ ConcurrentHashMap은 **버킷별 독립 락** 사용
 95% 조회가 5% 업데이트와 간섭 없음
 ```
 
+## 정리 및 요약
+
+멱등성 자료를 찾다가 마주친 `synchronized`, `Lock`, `Atomic`  으로 시작해 동시성 까지 고민하면서 쓰게된 이 글은
+
+"나의 요구사항이 충분히 고민하고 검수가 되었는가?" 라는 또 다른 고민을 만들었습니다.&#x20;
+
+결국 앞서 이야기한 기법들은 환경과 조건들로 인해 사용을 못할수도 있고, 인프라 환경에 따라 무용지물이 될수있습니다.&#x20;
+
+기술은 도구이고 더 좋은 도구나 적절한 상황에서 더 유용하게 쓸수있습니다.&#x20;
+
+저희가 할일은 다음과 같다 생각합니다.
+
+* 우리의 서비스를 위해 개발자, 기획, 디자인 등 각 직무의 동료들이 같은 방향을 바라보고 있는지?&#x20;
+* 서비스에서 고객의 니즈를 기반으로 한 요구사항이 정의가 되었는지?
+* 요구사항을 통해 유의미한 결과를 만들어낼수있는 도구를 우리가 판단할수 있는지?&#x20;
+
+이리저리 돌아서 결국 중요한건 명확한 요구사항 분석 이라고 생각합니다.
+
+요구사항이 명확해야 올바른 기술을 선택할 수 있고, 서비스를 사용하는 사용자에게 가치를 전달할 수 있다 생각합니다.
+
+
+
+#### 구현 코드 프로젝트 : [https://github.com/hyujikoh/concurrency\_idempotent](https://github.com/hyujikoh/concurrency_idempotent)
+
+## 참고 문서
+
+1. [멱등성이 뭔가요? - 토스페이먼츠 개발자센터](https://docs.tosspayments.com/blog/what-is-idempotency)
+2. [멱등성을 이용한 중복 작업 방지 API 구축 - Leapcell](https://leapcell.io/blog/ko/myeokdeungseong-eul-yonghan-jungbok-jag-eob-bangji-API-geuchuk)
+3. [API의 멱등성을 고려하여 개발하기 - 티스토리](https://cobinding.tistory.com/279)
+4. [Java 동시성 제어 기법 - velog](https://velog.io/@wontaekoh/%EB%8F%99%EC%8B%9C%EC%84%B1-%EB%AC%B8%EC%A0%9C-%EB%B0%8F-Java%EC%97%90%EC%84%9C%EC%9D%98-%ED%95%B4%EA%B2%B0%EB%B0%A9%EB%B2%95)
+5. [자바에서 동시성 문제를 다루는 n가지 방법들 - 티스토리](https://upcurvewave.tistory.com/649)
+6. [Java의 synchronized, Lock Stripping과 Atomic Type - 티스토리](https://320hwany.tistory.com/101)
+7. [자바의 동시성 이슈 해결하기 - F-Lab](https://f-lab.kr/insight/solving-concurrency-in-java)
+8. [ConcurrentHashMap은 어떻게 동시성을 보장할까? - 티스토리](https://simgee.tistory.com/36)
+9. [ConcurrentHashmap 동시성 처리 방법 - 티스토리](https://thewayitwas.tistory.com/608)
+10. [ConcurrentHashMap 개념과 동기화 동작 원리 - 티스토리](https://wildeveloperetrain.tistory.com/271)
+11. [HashMap의 Thread-safety와 대안들 - 티스토리](https://danuvibe.tistory.com/92)
