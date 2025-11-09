@@ -68,7 +68,7 @@
   * [멱등성에서 시작해 동시성까지 제어해야할 문제를 정의](study/tech/concurrency_idempotent.md)
 * [📓 WIL](study/wil/README.md)
   * [WIL: 오늘도 우리의 과일은 신선한가요? (aka 우리의 테스트 코드는 바로 검증이 가능한걸까요?)](study/wil/fresh-fruit.md)
-  * [WIL: 요구사항, E-R , ERD까지, 공사를 위한 설계도 만들기](study/wil/wil-e-r-erd.md)
+  * [WIL: 요구사항, E-R , ERD까지, 공사를 위한 설계도 만들기](study/wil/week2.md)
 
 ## REVIEW
 
