@@ -65,7 +65,7 @@
       * [JWT with Java Spring 프로젝트 만들기(2) 토큰 유효성 검증](study/back-end/undefined/jwt/jwt-with-java-spring-2.md)
 * [🖋️ Tech](study/tech/README.md)
   * [단위 테스트가 많을수록 좋을까? 🤔 피라미드 vs 트로피, 우리 팀에 맞는 전략 찾기](study/tech/vs.md)
-  * [멱등성에서 시작해 동시성 제어까지 제어해야할 문제를 정의](study/tech/concurrency_idempotent.md)
+  * [멱등성에서 시작해 동시성까지 제어해야할 문제를 정의](study/tech/concurrency_idempotent.md)
 * [📓 WIL](study/wil/README.md)
   * [WIL: 오늘도 우리의 과일은 신선한가요? (aka 우리의 테스트 코드는 바로 검증이 가능한걸까요?)](study/wil/fresh-fruit.md)
   * [요구사항, E-R , ERD까지, 공사를 위한 설계도 만들기](study/wil/e-r-erd.md)
