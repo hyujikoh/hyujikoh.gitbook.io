@@ -707,7 +707,7 @@ OrderRepository 인터페이스를 domain에 두고 OrderRepositoryImpl을 infra
 
 복잡한 아키텍처가 중요한 게 아니라, 각 계층의 책임과 의존 방향이 명확한 게 중요했습니다.
 
-### 배운 것들
+#### 배운 것들
 
 좋아요와 주문 도메인을 개발하면서 배운 것들을 정리하면 이렇습니다.
 
@@ -734,4 +734,43 @@ DDD든 헥사고날이든, 결국 핵심은 "도메인으로 뭘 해야 하고 �
 "이 이 객체는 뭘 해야 하고, 누구와 대화해야 할까?"
 
 이 질문에 명확히 답할 수 있도록, 리팩토링 하고 또 개발하고 있습니다.
+
+
+
+
+
+## 참고 문헌
+
+#### DDD 및 도메인 설계
+
+1. **DDD - 도메인 주도 설계의 핵심 개념**
+   * [https://eottabom.github.io](https://eottabom.github.io)
+2. **도메인 주도 설계의 사실과 오해 (3) 연관 관계와 애그리거트**
+   * [https://borntodare.me](https://borntodare.me)
+3. **도메인 주도 설계와 서비스 계층의 이해**
+   * [https://f-lab.kr](https://f-lab.kr)
+4. **카카오페이 여신코어 DDD(Domain Driven Design, 도메인 주도 설계)**
+   * [https://tech.kakaopay.com](https://tech.kakaopay.com)
+5. **DDD 입문서를 읽고 나서 느낀 DDD란 무엇인가?**
+   * [https://strong-park.tistory.com](https://strong-park.tistory.com)
+
+#### 레이어드 아키텍처 및 DIP
+
+6. **Infrastructure Layer 설계하는 방법 (+ DIP 제대로 사용하기)**
+   * [https://jaehoney.tistory.com](https://jaehoney.tistory.com)
+7. **도메인 주도 설계의 계층화 아키텍처(Layered Architecture)와 DIP**
+   * [https://yoonbing9.tistory.com](https://yoonbing9.tistory.com)
+8. **\[Spring] Spring 프로젝트에서 레이어드 아키텍처 제대로 이해하기**
+   * [https://devhooney.tistory.com](https://devhooney.tistory.com)
+9. **객체 지향 개발 방법론과 클린 아키텍처에서 DIP의 중요성**
+   * [https://f-lab.kr](https://f-lab.kr)
+10. **OCP를 만족하는 Layered Architecture 개발하기**
+    * [https://traeper.tistory.com](https://traeper.tistory.com)
+
+#### 책임 주도 설계
+
+11. **\[Object] 책임 주도 설계 내용 정리**
+    * [https://microhabitat.tistory.com](https://microhabitat.tistory.com)
+12. **자바 객체를 설계하는 요령 - 책임주도설계**
+    * [https://velog.io](https://velog.io)
 
