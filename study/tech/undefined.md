@@ -282,8 +282,6 @@ Application → Domain ← Infrastructure
 이리저리 돌고 돌아서 내린 결론은 좋아요는 User의 일도, Product의 일도 아니고 오로지. 좋아요만의 책임이 있다. 다만 독립적인 도메인이 아니라 상호작용이 절대적으로 필요한 도메인이라는 결론을 내렸습니다. \
 **User와 Product의 관계를 표현하는 것이 좋아요의 본질이라는게 제 결론 이었습니다**
 
-
-
 ```java
 public class LikeEntity extends BaseEntity {
 
@@ -373,4 +371,286 @@ public class LikeFacade {
 
 도메인 서비스는 한 도메인만 알고, 응용 서비스는 여러 도메인을 조율합니다.
 
-반대로 강하게 결합된 도메인을 어떻게 설계했는지, Order와 OrderItem 예제를 통해 살펴보겠습니다.
+반대로 강하게 결합된 도메인을 어떻게 설계했는지, Order와 OrderItem 예제를 통해 확인해봤습니다.
+
+
+
+***
+
+
+
+## 3. 주문 도메인: 강한 결합, 하지만 독립적인 테스트 <a href="#id-3" id="id-3"></a>
+
+### Order와 OrderItem의 관계
+
+좋아요 도메인과는 다른 고민이 생겼습니다.
+
+주문(Order)과 주문항목(OrderItem)은 분명 강한 관계입니다. 주문 없이 주문항목은 존재할 수 없고, 주문이 삭제되면 주문항목도 함께 삭제되어야 합니다. 생명주기를 함께하는 관계입니다.
+
+그런데 코드를 작성하다 보니 Like와는 다른 선택을 하게 됐습니다.
+
+#### 왜 ID 참조를 선택했는가
+
+
+
+```java
+@Entity
+@Table(name = "orders")
+public class OrderEntity extends BaseEntity {
+    
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+    
+    @Column(name = "total_amount", nullable = false)
+    private BigDecimal totalAmount;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private OrderStatus status;
+    
+    public static OrderEntity createOrder(OrderDomainCreateRequest request) {
+        return new OrderEntity(request);
+    }
+    
+    public void confirmOrder() {
+        if (this.status != OrderStatus.PENDING) {
+            throw new CoreException(ErrorType.INVALID_ORDER_STATUS);
+        }
+        this.status = OrderStatus.CONFIRMED;
+    }
+}
+
+
+---
+
+// 주문 항목
+@Entity
+@Table(name = "order_items")
+public class OrderItemEntity extends BaseEntity {
+    
+    @Column(name = "order_id", nullable = false)
+    private Long orderId;
+    
+    @Column(name = "product_id", nullable = false)
+    private Long productId;
+    
+    @Column(name = "quantity", nullable = false)
+    private Integer quantity;
+    
+    @Column(name = "unit_price", nullable = false)
+    private BigDecimal unitPrice;
+    
+    @Column(name = "total_price", nullable = false)
+    private BigDecimal totalPrice;
+    
+    public static OrderItemEntity createOrderItem(OrderItemDomainCreateRequest request) {
+        return new OrderItemEntity(request);
+    }
+    
+    public BigDecimal calculateItemTotal() {
+        return unitPrice.multiply(BigDecimal.valueOf(quantity));
+    }
+}
+```
+
+
+
+일반적으로 생각 하면 `Order` 에 `orderitem` 을 가져야 한다고 생각할수 있지만,&#x20;
+
+저는 `OrderItem`  에 id 참조 방식을 적용했는데,  이유는 **각자의 책임을 명확히 분리** 하기 위해서였습니다.
+
+**Order와 OrderItem은 강한 관계입니다**
+
+분명히, OrderItem은 Order 없이 생성될 수 없습니다. 생명주기를 함께하는 강한 참조 관계입니다. 주문이 삭제되면 주문항목도 삭제되어야 합니다.
+
+그런데 강한 관계라고 해서 반드시 객체 참조로 연결해야 할까라는 생각이 들었습니다.
+
+**각자의 책임은 다릅니다**
+
+* **Order의 책임**: 주문 상태 관리, 주문 총액 관리, 주문 확정/취소
+* **OrderItem의 책임**: 항목별 수량 관리, 항목별 금액 계산, 가격 검증
+
+Order가 OrderItem 컬렉션을 직접 가지면, Order의 테스트에서 OrderItem의 로직까지 함께 검증해야 합니다. Order의 상태 변경 로직을 테스트하는데 왜 항목의 행위에 대해 까지 고민을 해야하는지 고민을 했습니다. 만약 삭제가 필요하다고 하면, 비즈니스 로직에서 충분히 검증 및 테스트를 통해 풀어낼수 있습니다.
+
+**도메인의 독립적인 역할과 각 도메인의 상호작용을 통해서 각각의 격벽을 만들어내는것이 중요하다 생각했습니다.**
+
+각자의 비즈니스 로직을 독립적으로 검증할 수 있습니다. Order의 상태 관리 로직이 변경되어도 OrderItem 테스트는 영향받지 않고, 그 반대도 마찬가지입니다.
+
+**LazyLoading도 가능하지만**
+
+물론 `@OneToMany(fetch = FetchType.LAZY)`로 지연 로딩을 할 수도 있습니다. 하지만 그건 기술적 해결책일 뿐입니다.
+
+제가 ID 참조를 선택한 진짜 이유는 **도메인의 책임을 명확히 분리**하기 위해서였습니다. Order는 주문의 상태를, OrderItem은 항목의 금액을 책임집니다. 이 책임을 코드 레벨에서도, 테스트 레벨에서도 분리하고 싶었습니다.
+
+Order와 OrderItem의 관계는 분명히 있습니다. 하지만 그 관계를 **어느 계층에서 관리**하느냐가 중요했습니다.
+
+
+
+```java
+// 도메인 계층: 각자의 책임만
+OrderEntity order = OrderEntity.createOrder(...);
+OrderItemEntity item = OrderItemEntity.createOrderItem(...);
+
+// 응용 계층: 관계를 조율
+@Transactional
+public void createOrder(Long userId, List<OrderItemRequest> items) {
+    OrderEntity order = orderService.create(userId, totalAmount);
+    
+    items.forEach(itemRequest -> {
+        orderItemService.create(order.getId(), itemRequest);
+    });
+}
+```
+
+도메인 계층에서는 각자의 책임에만 집중하고, 응용 계층에서 관계를 조율하는 방식으로 이번 설계를 해봤습니다.&#x20;
+
+
+
+***
+
+## 4. 실무에서 마주한 고민들 <a href="#id-4" id="id-4"></a>
+
+### 값 객체는 언제 만들어야 할까
+
+Order와 OrderItem을 개발하면서 BigDecimal 타입의 금액을 다루게 됐습니다.
+
+totalAmount, unitPrice, totalPrice 모두 `BigDecimal`  이었는데, 개발하다 보니 불안한 순간이 있었습니다. \
+가령 quantity와 unitPrice 는 개념이 다르지만,  둘 다 숫자 타입이라 구조상으로는 서로 계산이 되지만, 논리적으로는 말이 안 됩니다.
+
+Price라는 값 객체 (VO) 를 만들까 고민했습니다. 하지만 현재 프로젝트에서는 금액 계산 로직이 복잡하지 않았습니다. 단순히 곱하기, 더하기 정도였습니다.
+
+결국 BigDecimal을 그대로 사용하기로 했습니다. 대신 calculateItemTotal 같은 메서드로 계산 로직을 명확히 캡슐화했습니다.&#x20;
+
+```java
+public BigDecimal calculateItemTotal() {
+    return unitPrice.multiply(BigDecimal.valueOf(quantity));
+}
+```
+
+만약 나중에 환율 계산이나 복잡한 할인 정책이 추가된다면, 그때 Price VO를 만들어도 늦지 않다고 판단했습니다.
+
+제가 생각했을때 값 객체를 만들어야 하는 기준을 정리하면 이렇습니다.&#x20;
+
+* 비즈니스 규칙이 있을 때
+* 타입 안정성이 중요할 때
+* 여러 곳에서 같은 검증이 반복될 때.&#x20;
+
+단순히 타입을 감싸는 것만으로는 충분하지 않습니다.
+
+모든 필드에 의미를 부여할 필요는 없고, 의미 있는 대상에게만 특별한 이름을 붙이면 됩니다.
+
+### 코드 중복, 언제 공통화할까
+
+Order와 OrderItem 둘 다 검증 로직이 있습니다. null 체크, 0 이하 체크 같은 것들입니다.
+
+처음엔 ValidationUtils 같은 공통 클래스를 만들고 싶었지만. 현상 유지를 했습니다.
+
+**OrderEntity의 검증**
+
+```java
+private OrderEntity(OrderDomainCreateRequest request) {
+    Objects.requireNonNull(request, "주문 생성 요청은 필수입니다.");
+    Objects.requireNonNull(request.userId(), "사용자 ID는 필수입니다.");
+    Objects.requireNonNull(request.totalAmount(), "주문 총액은 필수입니다.");
+    f (request.totalAmount().compareTo(BigDecimal.ZERO) <= 0) {
+        throw new IllegalArgumentException("주문 총액은 0보다 커야 합니다.");
+    }
+    this.userId = request.userId();
+    this.totalAmount = request.totalAmount();
+    this.status = OrderStatus.PENDING;
+}
+
+public void confirmOrder() {
+    if (this.status != OrderStatus.PENDING || this.getDeletedAt() != null) {
+        throw new CoreException(ErrorType.INVALID_ORDER_STATUS,
+        "주문 확정은 대기 상태 또는 활성화된 주문만 가능합니다.");
+    }
+    this.status = OrderStatus.CONFIRMED;
+}
+```
+
+**OrderItemEntity의 검증**
+
+```java
+private void validateRequest(OrderItemDomainCreateRequest request) {
+    if (request == null) {
+        throw new IllegalArgumentException("주문 항목 생성 요청은 필수입니다.");
+    }
+    if (request.quantity() == null) {
+        throw new IllegalArgumentException("주문 수량은 필수입니다.");
+    }
+    if (request.quantity() <= 0) {
+        throw new IllegalArgumentException("주문 수량은 1 이상이어야 합니다.");
+    }
+    if (request.unitPrice().compareTo(BigDecimal.ZERO) <= 0) {
+        throw new IllegalArgumentException("단가는 0보다 커야 합니다.");
+    }
+}
+
+@Override
+protected void guard() {
+    BigDecimal calculatedTotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
+    if (this.totalPrice.compareTo(calculatedTotal) != 0) {
+        throw new IllegalStateException("총 가격이 단가 × 수량과 일치하지 않습니다.");
+    }
+}
+```
+
+실제로 Order의 검증과 OrderItem의 검증은 미묘하게 달랐습니다. Order는 상태에 따른 검증이 필요했고, OrderItem은 금액 정합성 검증이 추가로 필요했습니다.
+
+만약 ValidationUtils를 만들었다면 이렇게 됐을 것입니다.
+
+```java
+class ValidationUtils {
+    static void checkNotNull(Object value, String message) {
+    if (value == null) throw new IllegalArgumentException(message);
+    }
+    
+    
+    static void checkPositive(BigDecimal value, String message) {
+        if (value.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException(message);
+        }
+    }
+    
+    // Order만 쓰는 검증
+    static void checkOrderStatus(OrderStatus status, LocalDateTime deletedAt) { ... }
+    
+    // OrderItem만 쓰는 검증
+    static void checkPriceConsistency(BigDecimal total, BigDecimal unit, int qty) { ... }
+    
+}
+```
+
+이건 더 이상 공통 유틸이 아니고, 도메인 로직이 유틸리티로 새어나간 것입니다.
+
+성급하게 공통화했다면, 조건문이 가득한 복잡한 Validator가 만들어졌을 테고, 여러 도메인을 적용하려고 이리저리 시도했을 것입니다. 결국 정말 필요하다 싶을 때 구현하겠다는 다짐을 하고 오히려 각자의 검증 로직을 명확하게 했습니다.
+
+코드 중복을 봤을 때 제가 정한 기준은 이렇습니다. 중복이 생기면 우선 그대로 두고 그것이 컴파일이나 IDE warning이 도배가 되었을 때만 공통화를 고려합니다. 그리고 공통화할 때도 "정말 같은 것인가?"를 한 번 더 확인합니다.
+
+중복을 피하기 위해 과도한 추상화는 도메인 사이에 경계가 무너질 거라고 생각했습니다. 약간의 중복은 각 도메인의 독립성을 보장하는 장치가 될 수 있습니다.
+
+**언제 공통화할까**
+
+만약 Price 값 객체를 만든다면 얘기가 달라집니다.
+
+```java
+class Price {
+    private final BigDecimal value;
+    
+    
+    public Price(BigDecimal value) {
+        if (value.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("가격은 0보다 커야 합니다.");
+        }
+        this.value = value;
+    }
+
+}
+
+// Order와 OrderItem에서 사용
+private Price totalAmount;
+private Price unitPrice;
+```
+
+이건 중복 제거가 아니라 개념의 추출로 값 객체를 사용할수 있다 생각합니다. 다만 지금은 BigDecimal을 직접 사용하고 있고, 각 도메인마다 금액의 의미가 명확하다 생각이 들지 않기 때문에, 우선은 각각 BigDecimal 를 사용해 운영하고 있었습니다 .&#x20;
