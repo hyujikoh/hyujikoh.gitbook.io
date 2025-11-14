@@ -266,3 +266,111 @@ Application → Domain ← Infrastructure
 이번에 실무에 도입했을때도 레이어드 아키텍처 + DIP는 이해하기 쉽고, 테스트하기 쉽고, 변경하기 용이했습니다.&#x20;
 
 **이렇게 아키텍처를 구성하고 나서 중요했던건 "각 도메인은 어떻게 상호작용을 해야하는건가?" 였습니다.**&#x20;
+
+
+
+
+
+## 2. 좋아요 도메인: 관계만 관리하는 엔티티 <a href="#id-2" id="id-2"></a>
+
+### 좋아요는 독립적일 수 없다
+
+좋아요 기능을 구현하면서 고민이 생겼습니다.
+
+좋아요(Like)는 User와 Product가 있어야만 존재할 수 있습니다. 사용자도 없고 상품도 없는데 좋아요만 있을 수는 없습니다. 이런 도메인을 어떻게 설계해야 할까요?
+
+이리저리 돌고 돌아서 내린 결론은 좋아요는 User의 일도, Product의 일도 아니고 오로지. 좋아요만의 책임이 있다. 다만 독립적인 도메인이 아니라 상호작용이 절대적으로 필요한 도메인이라는 결론을 내렸습니다. \
+**User와 Product의 관계를 표현하는 것이 좋아요의 본질이라는게 제 결론 이었습니다**
+
+
+
+```java
+public class LikeEntity extends BaseEntity {
+
+    @Column(nullable = false)
+    private Long userId;
+
+    @Column(nullable = false)
+    private Long productId;
+
+    public static LikeEntity createEntity(Long userId, Long productId) {
+        return new LikeEntity(userId, productId);
+    }
+}
+
+```
+
+Like는 User와 Product를 객체로 참조하지 않고 ID로만 참조했습니다. 인스턴스 대신  ID로만 참조한 이유는
+
+객체로 직접 참조하면 Like 조회 시 User, Product도 함께 조회되고, User나 Product가 변경되면 Like도 영향받을 수 있습니다. 반면 ID로만 참조하면 Like는 "누가 어떤 상품을 좋아했다"는 관계 정보만 관리하고, User, Product와 독립적으로 동작하도록 하도록 의도하여 설계하였습니다.
+
+#### 도메인 서비스: Like만의 책임
+
+```java
+@Component
+@RequiredArgsConstructor
+public class LikeService {
+    private final LikeRepository likeRepository;
+    
+    @Transactional(readOnly = true)
+    public Optional<LikeEntity> findLike(Long userId, Long productId) {
+        return likeRepository.findByUserIdAndProductId(userId, productId);
+    }
+    
+    @Transactional
+    public LikeEntity upsertLike(Long userId, Long productId) {
+        return likeRepository.findByUserIdAndProductId(userId, productId)
+                .map(like -> {
+                    if (like.getDeletedAt() != null) {
+                        like.restore();
+                    }
+                    return like;
+                })
+                .orElseGet(() -> likeRepository.save(
+                    LikeEntity.createEntity(userId, productId)
+                ));
+    }
+}
+```
+
+LikeService는 오직 Like Repository에만 의존합니다. User를 모르고, Product를 모르고, Like의 생성, 조회, 삭제만 담당합니다. 이게 도메인 서비스의 책임입니다.
+
+#### 응용 서비스: 여러 도메인 조율
+
+실제 좋아요 등록은 Like만으로 끝나지 않습니다. 사용자 검증, 상품 검증, 좋아요 등록, 좋아요 수 증가까지 필요합니다. 이 전체 흐름을 응용 서비스(Facade)가 담당합니다.
+
+```java
+@Component
+@RequiredArgsConstructor
+public class LikeFacade {
+    private final ProductService productService;
+    private final UserService userService;
+    private final LikeService likeService;
+    @Transactional
+    public LikeInfo upsertLike(String username, Long productId) {
+        UserEntity user = userService.getUserByUsername(username);
+        ProductEntity product = productService.getProductDetail(productId);
+        LikeEntity likeEntity = likeService.upsertLike(user.getId(), product.getId());
+        productService.increaseLikeCount(product.getId());
+        return LikeInfo.of(likeEntity, product, user);
+    }
+}
+```
+
+#### 책임 분리
+
+* **LikeEntity**: 좋아요 관계 데이터 관리
+* **LikeService**: Like 도메인 로직, LikeRepository만 의존
+* **LikeFacade**: User, Product, Like 세 도메인 조율
+
+결국 파사드에서 도메인을 활용하는 방법은 뷔페 에서 음식을 골라 먹는것과 같았습니다. 뷔페의 각 음식(도메인)은 서로를 모릅니다. 손님(응용 서비스)이 음식을 조합해서 한 끼 식사를 완성하는 과정이었습니다.
+
+#### 좋아요 도메인을 통해 알게된건?
+
+좋아요 도메인을 통해 배운 것들입니다.
+
+관계만 관리하는 엔티티도 독립된 도메인입니다. Like는 매핑 테이블 성격이 강하지만 자신만의 책임이 명확하고, ID 참조로 느슨한 결합을 유지합니다.
+
+도메인 서비스는 한 도메인만 알고, 응용 서비스는 여러 도메인을 조율합니다.
+
+반대로 강하게 결합된 도메인을 어떻게 설계했는지, Order와 OrderItem 예제를 통해 살펴보겠습니다.
