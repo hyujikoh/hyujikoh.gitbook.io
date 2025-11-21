@@ -1,7 +1,3 @@
----
-hidden: true
----
-
 # 우리 서비스는 Lock이 정말 필요한가? - 동시성 제어의 선택과 트레이드오프
 
 > TL:DR : Lock은 만능이 아니며, 도메인 특성을 이해하고 최소한의 복잡도로 해결하는 것이 중요하다.
@@ -603,3 +599,25 @@ Lock은 강력하지만, 성능 저하, 데드락, 복잡도 증가라는 비싼
 ### 마지막으로 <a href="#undefined" id="undefined"></a>
 
 "정말 우리 서비스에 동시에 1000명이 같은 쿠폰을 쓸까?"라는 질문부터 시작했던 이 글은, 결국 과한 복잡도를 경계하는 것의 중요성을 다시 확인하는 과정이었습니다. 복잡한 기법보다 문제의 본질을 이해하고 적절한 수준의 해결책을 찾는 것이 더 중요했습니다.
+
+
+
+## 참고 문헌
+
+#### **낙관적 락과 비관적 락**
+
+* [Spring Data JPA - 낙관적 락, 비관적 락으로 동시성 제어해보기](https://green-bin.tistory.com/256)
+* [JPA 낙관적 락과 비관적 락으로 엔티티에 대한 동시성 이슈 해결하기](https://haon.blog/database/optimistic-pessimistic-lock/)
+
+#### **동시성 제어 전략**
+
+* [쿠폰 발급 시 동시성 제어를 위해 고려했던 4가지 방법](https://starting-coding.tistory.com/694)
+
+#### **데드락 문제**
+
+* [MySQL InnoDB Transaction Deadlock 해결하기](https://woopaca.tistory.com/21)
+
+#### **원자적 UPDATE 쿼리**
+
+* [UPDATE 한 줄로 끝내는 동시성 문제](https://myvelop.tistory.com/258)
+
