@@ -248,8 +248,7 @@ public void fileAccessIs403(){
 }
 ```
 
-테스트 결과는 다음과 같이 나왔다!\
-
+테스트 결과는 다음과 같이 나왔다!<br>
 
 <img src="../../../../.gitbook/assets/image (9) (1).png" alt="" data-size="original">
 

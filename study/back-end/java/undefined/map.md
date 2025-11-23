@@ -244,8 +244,7 @@ private void testHashtableMultiThreadDetail(int operations, int threadCount) thr
 
 #### 성능 비교
 
-테스트 는 이전에 했던걸 이용하기로 했다. \
-
+테스트 는 이전에 했던걸 이용하기로 했다. <br>
 
 ```java
 @Test

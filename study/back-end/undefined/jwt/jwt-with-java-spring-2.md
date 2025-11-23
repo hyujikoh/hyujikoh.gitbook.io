@@ -34,8 +34,7 @@ public void readJwt(){
 
 처음이 테스트는 아마 빌드부터 안될것이다. `isValidJwt` 라는 메소드 자체가 없기 때문이다.&#x20;
 
-메소드를 만든다면 다음과 같이 구성되어있을것이다.\
-
+메소드를 만든다면 다음과 같이 구성되어있을것이다.<br>
 
 ```java
 public boolean isValidJwt(String token) {
