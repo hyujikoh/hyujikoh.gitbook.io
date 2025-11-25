@@ -68,7 +68,7 @@
   * [멱등성에서 시작해 동시성까지 제어해야할 문제를 정의](study/tech/concurrency_idempotent.md)
   * [DDD, 이제는 쉽게: 책임과 관계로 풀어낸 도메인 설계 원칙](<study/tech/undefined (1).md>)
   * [우리 서비스는 Lock이 정말 필요한가? - 동시성 제어의 선택과 트레이드오프](study/tech/lock.md)
-  * [캐시 및 인덱스 가제](study/tech/undefined.md)
+  * [이 데이터는 핫데이터 인가 ?](study/tech/undefined.md)
 * [📓 WIL](study/wil/README.md)
   * [WIL: 오늘도 우리의 과일은 신선한가요? (aka 우리의 테스트 코드는 바로 검증이 가능한걸까요?)](study/wil/fresh-fruit.md)
   * [WIL: 요구사항, E-R , ERD까지, 공사를 위한 설계도 만들기](study/wil/week2.md)
