@@ -712,7 +712,7 @@ void race_condition_재현_테스트() throws InterruptedException {
 
 결과는 기대했던대로 나왔습니다.
 
-<div align="left"><figure><img src="../../.gitbook/assets/image (49).png" alt=""><figcaption></figcaption></figure></div>
+<div align="left"><figure><img src="../../.gitbook/assets/image (96).png" alt=""><figcaption></figcaption></figure></div>
 
 100명이 1개씩 100번 구매했는데 재고가 4개가 남았고. 96**개만 차감되었습니다.**
 
@@ -999,7 +999,7 @@ void concurrentHashMap_쿠폰_발급_테스트() throws InterruptedException {
 
 위와 같은 테스트의 결과는 기대한 대로 나왔습니다.&#x20;
 
-<div align="left"><figure><img src="../../.gitbook/assets/image (50).png" alt=""><figcaption></figcaption></figure></div>
+<div align="left"><figure><img src="../../.gitbook/assets/image (97).png" alt=""><figcaption></figcaption></figure></div>
 
 ***
 

@@ -54,7 +54,7 @@ SI(8.4s), TBT(3.53) 라고 가정했을 경우, 조회 페이지에서 시각화
 
 많은 row 데이터를 chart, grid 형태로 랜더링 하는 과정에  FCP 와 상호작용 시간 사이에 모든 장기 작업(50ms 이상)의 차단 부분(Grid, Chart 등)을 더하여 계산했습니다.
 
-<figure><img src="../../.gitbook/assets/image (39).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (86).png" alt=""><figcaption></figcaption></figure>
 
 SI 도 같은 맥락으로 row 데이터를 기반으로 chart , grid content 로 노출이 되기 까지 많은 시간이 소요가 되었습니다.
 
@@ -62,11 +62,11 @@ SI 도 같은 맥락으로 row 데이터를 기반으로 chart , grid content �
 
 아래는 성능 개선 작업 이전에 성능 점수를 row 데이터를 기준으로 측정한 결과값 입니다. 어느 특정 갯수 이상 부터는 아예 측정 불가한 지표들이 일부 존재하여 평균 10점대의 성능점수가 나오는것으로 확인 되었습니다.
 
-<figure><img src="../../.gitbook/assets/image (41).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (88).png" alt=""><figcaption></figcaption></figure>
 
 다음은 각각 content 에 따른 점수 구간을 테이블 표로 작성한것 입니다. 테이블 보다 chart 를 그릴때 랜더링 속도가 현저히 저하되는 현상을 확인할수 있었습니다.
 
-<figure><img src="../../.gitbook/assets/image (42).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (89).png" alt=""><figcaption></figcaption></figure>
 
 
 
@@ -79,7 +79,7 @@ SI 도 같은 맥락으로 row 데이터를 기반으로 chart , grid content �
 
 다음 지표는 row 데이터 3000개 기준으로 성능 측정을 하였을때 피드백 입니다. js 실행시간을 단축하라는 것이 주 내용입니다.&#x20;
 
-<figure><img src="../../.gitbook/assets/image (43).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (90).png" alt=""><figcaption></figcaption></figure>
 
 
 
@@ -87,7 +87,7 @@ SI 도 같은 맥락으로 row 데이터를 기반으로 chart , grid content �
 
 보통 외부 라이브러리로 사용되는 [AMCHART](https://www.amcharts.com/) 스크립트에서 많은 소모시간이 발생되었습니다.&#x20;
 
-<figure><img src="../../.gitbook/assets/image (44).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (91).png" alt=""><figcaption></figcaption></figure>
 
 이렇게 실행시간이 많이 발생하는 부분이 무엇인지 분석해본 결과 가장 큰 원인이 되는 부분이 있었습니다.&#x20;
 
@@ -133,7 +133,7 @@ am4core.options.minPolylineStep = 10;
 
 
 
-<figure><img src="../../.gitbook/assets/image (47).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (94).png" alt=""><figcaption></figcaption></figure>
 
 
 
@@ -141,7 +141,7 @@ am4core.options.minPolylineStep = 10;
 
 라이트 하우스를 통해 받은 보고서 및 피드백을 통해 우선순위를 산정하여 하나씩 수행을 하였고 이전 대비 아래와 같은 결과를 얻었습니다.
 
-<figure><img src="../../.gitbook/assets/image (48).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (95).png" alt=""><figcaption></figcaption></figure>
 
 기존 대비 확실히 성능은 개선이 되었던건 사실이었지만, 여전히 많은 데이터를 content 형태로 제공할경우 성능이 저하 되는 부분은 있었습니다.&#x20;
 
