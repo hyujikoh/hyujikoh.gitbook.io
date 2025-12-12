@@ -448,12 +448,19 @@ public abstract class BaseEntity extends AbstractAggregateRoot<BaseEntity> {
 
 둘 다 “주문/결제와 관련은 있지만, 실패해도 비즈니스에 영향을 주면 안 되는 것”이라는 공통점이 있습니다.
 
+그래서 이 둘은 “도메인 이벤트와 섞지 않고”, 응용/인프라 전용 이벤트 흐름으로 분리했습니다.
+
 #### 1. 사용자 행동 이벤트 모델
 
-사용자 행동은 도메인보다는 **응용 계층이 더 잘 아는 영역**이라고 보았습니다.
+사용자 행동은 도메인 객체보다 **응용 계층이 더 잘 아는 정보**입니다.
+
+* 어떤 채널에서 들어왔는지 (WEB, APP)
+* 어떤 결제 수단을 썼는지
+* 어떤 맥락에서 조회/좋아요/주문을 했는지
+
+그래서 별도의 이벤트 모델을 두었습니다.
 
 ```java
-// (1) 사용자 행동 이벤트 모델
 public record UserBehaviorEvent(
         String eventType,   // "PRODUCT_VIEW", "LIKE_ACTION", "ORDER_CREATE" 등
         Long userId,
@@ -462,58 +469,38 @@ public record UserBehaviorEvent(
         Map<String, Object> properties,
         ZonedDateTime eventTime,
         String source       // "WEB", "MOBILE_APP" 등
-) {
-    public static UserBehaviorEvent likeAction(Long userId, Long productId, String action) { ... }
-    public static UserBehaviorEvent orderCreate(Long userId, Long orderId, Map<String, Object> props) { ... }
-}
+) { ... }
+```
+
+응용 계층(파사드)에서는 단순히 “사용자가 이런 행동을 했다”는 사실만 남기고,\
+실제 전송은 인프라 레이어에서 비동기로 처리합니다.
+
+```java
+behaviorTracker.trackOrderCreate(
+        user.getId(),
+        order.getId(),
+        "CARD",
+        order.getFinalTotalAmount().doubleValue(),
+        orderItems.size()
+);
 
 ```
 
 ```java
-// (2) 응용 계층에서 발행
-@Component
-@RequiredArgsConstructor
-public class UserBehaviorTracker {
-
-    private final ApplicationEventPublisher eventPublisher;
-
-    public void trackLikeAction(Long userId, Long productId, String action) {
-        eventPublisher.publishEvent(UserBehaviorEvent.likeAction(userId, productId, action));
-    }
-
-    public void trackOrderCreate(Long userId, Long orderId, String paymentMethod, Double totalAmount, Integer itemCount) {
-        Map<String, Object> props = Map.of(
-                "paymentMethod", paymentMethod,
-                "totalAmount", totalAmount,
-                "itemCount", itemCount
-        );
-        eventPublisher.publishEvent(UserBehaviorEvent.orderCreate(userId, orderId, props));
-    }
+@Async
+@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+public void handleUserBehavior(UserBehaviorEvent event) {
+    analyticsClient.sendBehaviorData(event); // 실패해도 비즈니스에는 영향 없음
 }
 
 ```
 
-```java
-// (3) 인프라 계층에서 비동기 처리
-@Component
-@RequiredArgsConstructor
-public class UserBehaviorEventHandler {
+핵심은:
 
-    private final AnalyticsClient analyticsClient;
+* **도메인 이벤트**: “무슨 상태 변화가 있었는가”
+* **사용자 행동 이벤트**: “사용자가 무엇을 했는가”
 
-    @Async
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handleUserBehavior(UserBehaviorEvent event) {
-        analyticsClient.sendBehaviorData(event); // 실패해도 비즈니스에는 영향 X
-    }
-}
-
-```
-
-**의도 요약**
-
-* 응용 계층: “사용자가 이런 행동을 했다”를 기록하고 이벤트 발행
-* 인프라 계층: AFTER\_COMMIT + @Async로 **트랜잭션 밖에서** 분석 시스템 연동
+를 분리해서, 섞이지 않게 한 것입니다.
 
 
 
@@ -521,10 +508,9 @@ public class UserBehaviorEventHandler {
 
 데이터 플랫폼도 마찬가지로 **핵심 비즈니스와는 느슨하게 연결되어야 하는 대상**입니다.
 
-먼저 도메인에서 “어떤 주문/결제 이벤트였는지”를 기록합니다.
+도메인 쪽에서는 “무슨 일이 있었는지”만 이벤트로 남겼습니다.
 
 ```java
-// (1) 주문 데이터 플랫폼 이벤트
 public record OrderDataPlatformEvent(
         Long orderId,
         Long orderNumber,
@@ -534,11 +520,8 @@ public record OrderDataPlatformEvent(
         BigDecimal discountAmount,
         BigDecimal finalTotalAmount,
         ZonedDateTime eventTime,
-        String eventType // "ORDER_CONFIRMED", "ORDER_CANCELLED"
-) {
-    public static OrderDataPlatformEvent confirmed(...) { ... }
-    public static OrderDataPlatformEvent cancelled(...) { ... }
-}
+        String eventType   // "ORDER_CONFIRMED", "ORDER_CANCELLED"
+) { ... }
 
 ```
 
@@ -556,57 +539,49 @@ public record PaymentDataPlatformEvent(
 
 ```
 
-도메인에서는 단순히 `registerEvent(...)`로 이 이벤트들을 등록하고,\
-인프라 계층에서 실제 외부 전송을 담당합니다.
+인프라 레이어에서는 이 이벤트만 받아서 외부 API를 호출합니다.
 
 ```java
-// (3) 인프라 이벤트 핸들러
-@Component
-@RequiredArgsConstructor
-public class DataPlatformEventHandler {
+@Async
+@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+public void handleOrderDataPlatform(OrderDataPlatformEvent event) {
+    dataPlatformClient.sendOrderData(OrderDataDto.from(event));
+}
 
-    private final DataPlatformClient dataPlatformClient;
-
-    @Async
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handleOrderDataPlatform(OrderDataPlatformEvent event) {
-        dataPlatformClient.sendOrderData(OrderDataDto.from(event)); // 실패해도 주문에는 영향 X
-    }
-
-    @Async
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handlePaymentDataPlatform(PaymentDataPlatformEvent event) {
-        dataPlatformClient.sendPaymentData(PaymentDataDto.from(event)); // 실패해도 결제에는 영향 X
-    }
+@Async
+@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+public void handlePaymentDataPlatform(PaymentDataPlatformEvent event) {
+    dataPlatformClient.sendPaymentData(PaymentDataDto.from(event));
 }
 
 ```
 
-```java
-// (4) 실제 외부 호출 (Fake)
-@Component
-@Slf4j
-public class DataPlatformClient {
+여기서 강조하고 싶은건 두 가지였습니다.
 
-    public boolean sendOrderData(OrderDataDto orderData) {
-        // HTTP 호출 대신 90% 성공 시뮬레이션
-        if (Math.random() < 0.9) return true;
-        return false;
-    }
+1. **AFTER\_COMMIT + @Async**&#x20;
+   * 메인 트랜잭션이 끝난 뒤,\
+     별도 스레드에서 외부 연동이 이뤄집니다.
+   * 데이터 플랫폼 장애가 나도\
+     주문/결제 자체는 그대로 남습니다.
+2. **도메인과 인프라의 역할 분리**
+   * 도메인: “이런 주문/결제가 이런 상태로 끝났다”는 **사실을 기록**
+   * 인프라: “그 사실을 외부 시스템에 전달”하는 구현
 
-    public boolean sendPaymentData(PaymentDataDto paymentData) {
-        if (Math.random() < 0.9) return true;
-        return false;
-    }
-}
 
-```
 
-**의도 요약**
+이벤트를 도입하면서, 응용/인프라 레이어에서는 이렇게 생각했습니다.
 
-* 도메인: “어떤 주문/결제가 어떤 상태로 끝났는지”를 **이벤트로 기록**
-* 인프라: AFTER\_COMMIT + @Async 로 메인 트랜잭션 밖에서 전송
-* 실패해도 비즈니스 트랜잭션에는 영향 없음
+* “도메인 입장에서 중요한 사건”은 **도메인 이벤트**로,
+* “도메인 밖(분석/플랫폼)에서 중요하게 보는 사건”은\
+  **응용/인프라 전용 이벤트**로,
+
+서로의 관심사를 섞지 않고 표현해 보자는 것.
+
+특히 사용자 행동 추적, 데이터 플랫폼 전송같이
+
+같이 “있으면 좋지만, 실패해도 핵심 비즈니스는 유지돼야 하는 일들”을\
+AFTER\_COMMIT + @Async 이벤트 흐름으로 **트랜잭션 밖으로 밀어낸 것**이\
+이번 구현에서 얻은 가장 큰 정리였습니다.
 
 ***
 
