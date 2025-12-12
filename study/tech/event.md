@@ -150,7 +150,7 @@ dataPlatformClient.sendOrderData(...);
 * 응용 계층이 “사용자가 이런 행동을 했다”고 기록하는 **사용자 행동 이벤트**
 * 이 사건에 관심 있는 쪽에서만 이를 구독해 처리하는 **이벤트 핸들러/리스너**
 
-1장에서 하고 싶었던 이야기는 단순합니다.
+정리하자면 다음과 같습니다.
 
 > 이벤트를 고민하기 전에,\
 > 먼저 “지금 이 응용 메서드가 떠안고 있는 관심사”를\
@@ -159,4 +159,301 @@ dataPlatformClient.sendOrderData(...);
 ***
 
 ## 2장. 로컬 이벤트 vs 글로벌 이벤트: 같은 이벤트 , 다른 도구
+
+스프링으로 이벤트를 처음 도입할 때, 보통 이런 구조를 많이 봅니다.
+
+1. 애플리케이션 안에서 **스프링 이벤트 발행**
+2. `@EventListener` 로 이벤트를 받고
+3. 그 리스너 안에서 `KafkaTemplate` 같은 MQ 클라이언트를 직접 호출
+
+```java
+// 1) 로컬 이벤트 발행
+applicationEventPublisher.publishEvent(new OrderCreatedEvent(orderId));
+
+// 2) 리스너에서 바로 글로벌 이벤트 발행
+@Component
+public class OrderCreatedEventListener {
+
+    private final KafkaTemplate<String, OrderCreatedMessage> kafkaTemplate;
+
+    @EventListener
+    public void handle(OrderCreatedEvent event) {
+        kafkaTemplate.send("order.created", toMessage(event)); // 바로 카프카 발행
+    }
+}
+
+```
+
+예전부터 “`로컬 이벤트` → `리스너` → `MQ 발행`”이라는 흐름을\
+일종의 관례처럼 받아들이고 있었습니다.
+
+* 스프링 이벤트 = 로컬 이벤트
+* Kafka/RabbitMQ = 글로벌 이벤트
+* “로컬에서 한 번 받고, 거기서 글로벌로 흘려보낸다”
+
+문제의식 없이 보면 충분히 자연스러운 구조입니다.\
+그런데 이번 주문/결제/쿠폰/행동 추적 기능을 구현하면서, 다시 고민에 빠지게 됐습니다.
+
+> 지금 내가 풀고 싶은 문제는서비스 간 통신 문제인가?\
+> 아니면, **한 애플리케이션 안에서 응용 메서드와 후속 로직의 결합** 문제인가?
+
+이번 서비스 환경 기준은 **단일 스프링 애플리케이션** 안에서 이뤄지고 있습니다.&#x20;
+
+* 주문, 상품, 쿠폰, 결제, 행동 추적이 모두 같은 코드베이스에 존재
+* 같은 DB를 보고, 같은 트랜잭션 경계를 공유.
+* 단 pg 결제를 하기위한 외부 모듈은 따로 구현한 상황
+
+이 상황에서 Kafka까지 끌어들이는 건\
+“서비스 간 결합”을 푸는 작업이라기보다는,\
+애플리케이션 내부의 관심사 분리를 위해 굳이 외부 인프라를 끌어오는 셈입니다.
+
+그래서 이번 기능에서는 다음과 같이 정리하였습니다.
+
+* **글로벌 이벤트(Kafka 등)**\
+  → 서비스가 물리적으로 분리되어 있고, 팀/배포 단위까지 나뉘어야 할 때 고려\
+  → 지금 기능의 스코프에서는 대상이 아님
+* **로컬 이벤트(Spring ApplicationEvent)**\
+  → 한 애플리케이션 안에서 “누가 무엇에 관심 있는지”를 나누는 데 초점\
+  → 지금 풀고 싶은 문제와 더 가깝다
+
+이렇게 관점을 나누고 나니,\
+스프링 이벤트를 쓰는 것에 대한 고민의 초점도 같이 바뀌었습니다.
+
+> “이게 진짜 EDA인가?” 보다 “이 응용 메서드와 후속 작업들의 결합을 푸는 데 도움이 되는가?”
+>
+> "내 관심사를 분리가 가능한 도메인인가?".
+
+정리하면, 이번 글에서 다루는 이벤트는 어디까지나 **로컬 이벤트**입니다.
+
+* 단일 스프링 애플리케이션 안에서,
+* 주문 생성이라는 사건을 중심으로,
+* “누가 이 사건에 관심을 가져야 하는지”를 코드로 나누는 작업입니다.
+
+이벤트를 쓴다고 해서 거창한 분산 시스템 이야기를 할 필요는 없다 생각합니다. 지금 이 글에서 다루는 건,\
+**한 애플리케이션 안에서 응용 메서드의 관심사를 어떻게 나눌 것인가**에 대한 것이기 때문이었습니다.
+
+이제 다음 장에서는, 이 로컬 이벤트를 어떻게 나눴는지, \
+그리고 “누가 무엇을 발행해야 한다고 결정했는지”를 정리해봤습니다.
+
+* 도메인 객체가 발행하는 **도메인 이벤트**
+* 응용 계층에서 발행하는 **사용자 행동 이벤트**
+
+***
+
+## 3장. 도메인 이벤트: 도메인의 주요 관심사
+
+앞에서 저는 이벤트를 “누군가 관심을 가지고 있어야 의미가 있는 과거의 사건”이라고 정의하고,\
+그 사건을 한 응용 메서드가 모두 떠안고 있는 구조에 문제의식을 가졌습니다.
+
+그래서 첫 번째로 손댄 부분은,\
+&#xNAN;**“비즈니스의 중심이 되는 사건”을 도메인 스스로 말하게 하는 것**이었습니다.\
+이번에 제가 선택한 방법은 다음과 같았습니다.
+
+#### 1. 결제 엔티티: 결제가 끝났다면, 그 사실은 결제가 말하도록
+
+결제 완료는 여러 곳에서 관심을 가질 수 있는 사건입니다.
+
+* 주문 도메인: 주문 상태 업데이트
+* 포인트/쿠폰 도메인: 후속 처리 (적립/회수 등)
+* 데이터 플랫폼: 결제 로그 적재
+* 알림 시스템: 결제 성공/실패 알림
+
+이전 구조에서는 위 행위들을 응용 서비스나 도메인 서비스가 직접 호출했습니다.\
+이번에는 “결제 완료”라는 사실 자체를 결제 엔티티가 선언하도록 바꿨습니다.
+
+```java
+public class PaymentEntity extends BaseEntity {
+
+    /**
+     * 결제 완료 처리 (도메인 이벤트 + 데이터 플랫폼 이벤트 발행)
+     */
+    public void completeWithEvent() {
+        complete(); // 내부 상태 변경 (예: status = COMPLETED)
+
+        // 주문 처리용 도메인 이벤트 발행
+        registerEvent(new PaymentCompletedEvent(
+                this.transactionKey,
+                this.orderNumber,
+                this.userId,
+                this.amount
+        ));
+
+        // 데이터 플랫폼 전송용 이벤트 발행
+        registerEvent(PaymentDataPlatformEvent.completed(
+                this.transactionKey,
+                this.orderNumber,
+                this.userId,
+                this.amount,
+                this.cardType
+        ));
+    }
+    
+    **
+     * 결제 실패 처리 (도메인 이벤트 + 데이터 플랫폼 이벤트 발행)
+     */
+    public void failWithEvent(String reason) {
+        fail(reason);
+
+        // 주문 처리용 도메인 이벤트 발행
+        registerEvent(new PaymentFailedEvent(
+                this.transactionKey,
+                this.orderNumber,
+                this.userId,
+                reason
+        ));
+
+        // 데이터 플랫폼 전송용 이벤트 발행
+        registerEvent(PaymentDataPlatformEvent.failed(
+                this.transactionKey,
+                this.orderNumber,
+                this.userId,
+                this.amount,
+                this.cardType,
+                reason
+        ));
+    }
+}
+```
+
+여기서 핵심은 두 가지입니다.
+
+1. **상태 변경과 이벤트 발행이 한 곳에 모여 있음**
+   * `complete()`로 결제 상태를 바꾸고
+   * 그 직후에 “결제가 완료되었다”는 사실을 이벤트로 남깁니다.
+   * 결제와 관련된 “핵심 사건”의 출발점이 결제 엔티티 내부로 모입니다.
+2. **서로 다른 관심사를 가진 이벤트를 분리했다**
+   * `PaymentCompletedEvent`\
+     → 주문/포인트/쿠폰 등 비즈니스 후속 처리용
+   * `PaymentDataPlatformEvent`\
+     → 로그/분석/데이터 플랫폼 전송용
+
+둘 다 “결제가 완료되었다”는 같은 사건에서 파생되지만,\
+관심사의 대상이 다르기 때문에 이벤트도 분리했습니다.
+
+지금 요구사항에서는 응용 계층 입장에서는, 단순하게 접근해도 충분하다 생각했습니다 .
+
+* 결제 엔티티에 “완료”를 요청.
+* 결제 엔티티는 스스로 상태를 바꾸고, 그에 따른 도메인 이벤트를 등록.
+* 이후에 이 이벤트를 **관심 있는 리스너들이** 처리.
+
+***
+
+#### 2. 좋아요 엔티티: 상태 변화와 이벤트를 함께 묶기
+
+좋아요도 비슷한 고민이 있었습니다.
+
+* 상품 상세에서 좋아요 수를 보여줘야 하고
+* 상품 통계/MV, 캐시에서도 좋아요 수를 사용하고
+* 유저 행동 분석에서도 좋아요 이벤트를 보고 싶습니다.
+
+이전에는 좋아요를 생성한 뒤\
+좋아요 집계/통계/캐시/분석을 응용 서비스에서 직접 호출했습니다.\
+이번에는 좋아요 엔티티가 상태 변화와 이벤트를 함께 책임지도록 바꿨습니다.
+
+```java
+public class LikeEntity extends BaseEntity {
+
+    /**
+     * 좋아요 생성 시 도메인 이벤트 발행
+     */
+    public static LikeEntity createWithEvent(Long userId, Long productId) {
+        LikeEntity likeEntity = new LikeEntity(userId, productId);
+
+        // 도메인 이벤트 발행 (좋아요 증가)
+        likeEntity.registerEvent(new LikeChangedEvent(
+                productId,
+                userId,
+                LikeChangedEvent.LikeAction.LIKE,
+                +1
+        ));
+
+        return likeEntity;
+    }
+
+    /**
+     * 좋아요 복원 시 도메인 이벤트 발행
+     */
+    public void restoreWithEvent() {
+        if (this.getDeletedAt() == null) {
+            throw new IllegalStateException("이미 활성 상태인 좋아요입니다.");
+        }
+
+        this.restore(); // 소프트 삭제 복원
+
+        // 도메인 이벤트 발행 (좋아요 증가)
+        registerEvent(new LikeChangedEvent(
+                this.productId,
+                this.userId,
+                LikeChangedEvent.LikeAction.LIKE,
+                +1
+        ));
+    }
+}
+```
+
+여기서도 의도는 결제와 같습니다.
+
+* “좋아요가 새로 생겼다”
+* “삭제됐던 좋아요가 복원되었다”
+
+라는 사실은,\
+좋아요 엔티티 자신이 가장 먼저, 가장 잘 알고 있습니다.
+
+그래서:
+
+* 엔티티 생성/복원 시점에 바로 `LikeChangedEvent`를 등록하고
+* 그 이후 집계/통계/캐시/조회 모델 업데이트는\
+  **이 이벤트를 관심 있게 보는 쪽의 책임**으로 넘겼습니다.
+
+***
+
+#### 3. 공통 베이스: AggregateRoot에서 이벤트를 관리하게 하기
+
+두 엔티티 모두 `BaseEntity`를 상속받고 있고,\
+`BaseEntity`는 스프링의 `AbstractAggregateRoot`를 확장하고 있습니다.
+
+```java
+@MappedSuperclass
+@Getter
+public abstract class BaseEntity extends AbstractAggregateRoot<BaseEntity> {
+}
+```
+
+이렇게 해두면:
+
+* 각 엔티티는 `registerEvent(...)` 만 호출하면 되고
+* 실제 이벤트 발행 시점은 스프링 데이터 JPA가 Flush 시점에 알아서 처리합니다.
+* “도메인 객체 내부에서 사건을 기록하고,\
+  외부로 내보내는 책임은 공통 베이스에서 처리”하는 구조가 됩니다.
+
+이 구조의 장점은:
+
+* 도메인 이벤트 발행 코드가 **엔티티 내부**에 자연스럽게 녹아들고
+* 응용/인프라 레이어에서는 “이벤트가 이미 등록되어 있다”는 전제하에\
+  처리만 담당하면 된다는 점입니다.
+
+다만 단점으로는 jpa 더티체킹이 안되기 때문에 명시적으로 \
+도메인 이벤트 호출하는 메서드에서 `jpaRepository.save(entity)` 를 명시해야 \
+정상적으로 이벤트를 받을수 있기 때문에 번거로운 작업이라고 할수도 있다는 생각도 들었습니다.
+
+
+
+## 4장. 응용 계층에서 발행하는 사용자 행동 이벤트 <a href="#id-4" id="id-4"></a>
+
+도메인 이벤트는 “도메인 내부에서 일어난 일”을 다루는 데 적합합니다.\
+반대로, **사용자가 어떻게 행동했는지**에 대한 정보는 도메인보다는 응용 계층이 더 잘 알고 있다 생각합니다.
+
+예를 들어, 주문 생성 행동을 생각해보면:
+
+* 어떤 화면/채널에서 발생했는지 (WEB, APP 등)
+* 어떤 결제 수단을 선택했는지 (CARD, POINT 등)
+* 유저가 어떤 흐름을 통해 이 페이지에 도달했는지
+
+이런 정보는 엔티티 안에 넣기보다는,\
+파사드/응용 계층에서 다루는 것이 더 자연스럽다고 판단했습니다.\
+물론 잘못된 정의라고 할수 있는 부분이 일부 있지만, \
+단순히 트래킹을 한다면 해당 응용 메서드에서 하는게 좋지 않을까 싶었습니다.
+
+그래서 사용자 행동은 **도메인 이벤트와 분리해서**,\
+응용 계층 전용 이벤트로 처리했습니다.
 
