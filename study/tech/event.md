@@ -22,7 +22,7 @@
 
 이 구조의 공통점은, “모든 관심사를 한 곳에서 직접 관리하려고 한다”는 것에 있었습니다.
 
-그래서 이번 기능들을 구현하면서 의식적으로 이런 질문들이 나왔습니다.
+이번 기능들을 구현하면서 의식적으로 이런 질문들이 나왔습니다.
 
 * 이 사건을 “알고만 있으면 되는” 사람은 누구인가?
 * 이 사건에 “관심이 있는” 주체는 어디까지인가?
@@ -440,20 +440,212 @@ public abstract class BaseEntity extends AbstractAggregateRoot<BaseEntity> {
 
 ## 4장. 응용 계층에서 발행하는 사용자 행동 이벤트 <a href="#id-4" id="id-4"></a>
 
-도메인 이벤트는 “도메인 내부에서 일어난 일”을 다루는 데 적합합니다.\
-반대로, **사용자가 어떻게 행동했는지**에 대한 정보는 도메인보다는 응용 계층이 더 잘 알고 있다 생각합니다.
+도메인 이벤트로 **비즈니스 핵심 사건**을 도메인 안으로 끌어들였다면,\
+응용/인프라 계층에서는 **두 가지 부가 관심사**를 이벤트로 분리했습니다.
 
-예를 들어, 주문 생성 행동을 생각해보면:
+* 사용자 행동 추적
+* 데이터 플랫폼 전송
 
-* 어떤 화면/채널에서 발생했는지 (WEB, APP 등)
-* 어떤 결제 수단을 선택했는지 (CARD, POINT 등)
-* 유저가 어떤 흐름을 통해 이 페이지에 도달했는지
+둘 다 “주문/결제와 관련은 있지만, 실패해도 비즈니스에 영향을 주면 안 되는 것”이라는 공통점이 있습니다.
 
-이런 정보는 엔티티 안에 넣기보다는,\
-파사드/응용 계층에서 다루는 것이 더 자연스럽다고 판단했습니다.\
-물론 잘못된 정의라고 할수 있는 부분이 일부 있지만, \
-단순히 트래킹을 한다면 해당 응용 메서드에서 하는게 좋지 않을까 싶었습니다.
+#### 1. 사용자 행동 이벤트 모델
 
-그래서 사용자 행동은 **도메인 이벤트와 분리해서**,\
-응용 계층 전용 이벤트로 처리했습니다.
+사용자 행동은 도메인보다는 **응용 계층이 더 잘 아는 영역**이라고 보았습니다.
 
+```java
+// (1) 사용자 행동 이벤트 모델
+public record UserBehaviorEvent(
+        String eventType,   // "PRODUCT_VIEW", "LIKE_ACTION", "ORDER_CREATE" 등
+        Long userId,
+        Long targetId,
+        String targetType,  // "PRODUCT", "ORDER" 등
+        Map<String, Object> properties,
+        ZonedDateTime eventTime,
+        String source       // "WEB", "MOBILE_APP" 등
+) {
+    public static UserBehaviorEvent likeAction(Long userId, Long productId, String action) { ... }
+    public static UserBehaviorEvent orderCreate(Long userId, Long orderId, Map<String, Object> props) { ... }
+}
+
+```
+
+```java
+// (2) 응용 계층에서 발행
+@Component
+@RequiredArgsConstructor
+public class UserBehaviorTracker {
+
+    private final ApplicationEventPublisher eventPublisher;
+
+    public void trackLikeAction(Long userId, Long productId, String action) {
+        eventPublisher.publishEvent(UserBehaviorEvent.likeAction(userId, productId, action));
+    }
+
+    public void trackOrderCreate(Long userId, Long orderId, String paymentMethod, Double totalAmount, Integer itemCount) {
+        Map<String, Object> props = Map.of(
+                "paymentMethod", paymentMethod,
+                "totalAmount", totalAmount,
+                "itemCount", itemCount
+        );
+        eventPublisher.publishEvent(UserBehaviorEvent.orderCreate(userId, orderId, props));
+    }
+}
+
+```
+
+```java
+// (3) 인프라 계층에서 비동기 처리
+@Component
+@RequiredArgsConstructor
+public class UserBehaviorEventHandler {
+
+    private final AnalyticsClient analyticsClient;
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleUserBehavior(UserBehaviorEvent event) {
+        analyticsClient.sendBehaviorData(event); // 실패해도 비즈니스에는 영향 X
+    }
+}
+
+```
+
+**의도 요약**
+
+* 응용 계층: “사용자가 이런 행동을 했다”를 기록하고 이벤트 발행
+* 인프라 계층: AFTER\_COMMIT + @Async로 **트랜잭션 밖에서** 분석 시스템 연동
+
+
+
+#### 2. 데이터 플랫폼 이벤트: 도메인에서 기록, 인프라에서 전송
+
+데이터 플랫폼도 마찬가지로 **핵심 비즈니스와는 느슨하게 연결되어야 하는 대상**입니다.
+
+먼저 도메인에서 “어떤 주문/결제 이벤트였는지”를 기록합니다.
+
+```java
+// (1) 주문 데이터 플랫폼 이벤트
+public record OrderDataPlatformEvent(
+        Long orderId,
+        Long orderNumber,
+        Long userId,
+        OrderStatus status,
+        BigDecimal originalTotalAmount,
+        BigDecimal discountAmount,
+        BigDecimal finalTotalAmount,
+        ZonedDateTime eventTime,
+        String eventType // "ORDER_CONFIRMED", "ORDER_CANCELLED"
+) {
+    public static OrderDataPlatformEvent confirmed(...) { ... }
+    public static OrderDataPlatformEvent cancelled(...) { ... }
+}
+
+```
+
+```java
+// (2) 결제 데이터 플랫폼 이벤트
+public record PaymentDataPlatformEvent(
+        String transactionKey,
+        Long orderId,
+        Long userId,
+        BigDecimal amount,
+        String cardType,
+        ZonedDateTime eventTime,
+        String eventType // "PAYMENT_COMPLETED", "PAYMENT_FAILED"
+) { ... }
+
+```
+
+도메인에서는 단순히 `registerEvent(...)`로 이 이벤트들을 등록하고,\
+인프라 계층에서 실제 외부 전송을 담당합니다.
+
+```java
+// (3) 인프라 이벤트 핸들러
+@Component
+@RequiredArgsConstructor
+public class DataPlatformEventHandler {
+
+    private final DataPlatformClient dataPlatformClient;
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleOrderDataPlatform(OrderDataPlatformEvent event) {
+        dataPlatformClient.sendOrderData(OrderDataDto.from(event)); // 실패해도 주문에는 영향 X
+    }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handlePaymentDataPlatform(PaymentDataPlatformEvent event) {
+        dataPlatformClient.sendPaymentData(PaymentDataDto.from(event)); // 실패해도 결제에는 영향 X
+    }
+}
+
+```
+
+```java
+// (4) 실제 외부 호출 (Fake)
+@Component
+@Slf4j
+public class DataPlatformClient {
+
+    public boolean sendOrderData(OrderDataDto orderData) {
+        // HTTP 호출 대신 90% 성공 시뮬레이션
+        if (Math.random() < 0.9) return true;
+        return false;
+    }
+
+    public boolean sendPaymentData(PaymentDataDto paymentData) {
+        if (Math.random() < 0.9) return true;
+        return false;
+    }
+}
+
+```
+
+**의도 요약**
+
+* 도메인: “어떤 주문/결제가 어떤 상태로 끝났는지”를 **이벤트로 기록**
+* 인프라: AFTER\_COMMIT + @Async 로 메인 트랜잭션 밖에서 전송
+* 실패해도 비즈니스 트랜잭션에는 영향 없음
+
+***
+
+## 5장. 그래서 이벤트... 그리고 어디까지 쓸 것인가
+
+지금까지의 구현을 통해,\
+제가 이벤트를 어떻게 이해하게 되었는지 간단히 정리하면 아래와 같습니다.
+
+1. **이벤트의 본질**
+   * 이벤트는 “누군가 관심을 가지고 있어야 의미가 있는 과거의 사건”
+   * 중요 포인트는 “무슨 일이 일어났는가” + “누가 거기에 관심을 가지는가”
+2. **내가 이벤트를 도입한 이유**
+   * 주문/결제 응용 메서드 하나에\
+     재고, 쿠폰, 데이터 플랫폼, 행동 추적까지 모두 섞여 있었기 때문
+   * 성능보다는 **관심사와 책임을 나누는 것**이 목적이었다.
+3. **로컬 vs 글로벌**
+   * 지금 스코프에서는 단일 스프링 애플리케이션 + 단일 DB
+   * Kafka 같은 글로벌 이벤트 인프라보다는\
+     **Spring ApplicationEvent로 충분**하다고 판단했다.
+   * “서비스 간 통신”이 아니라, “한 애플리케이션 안의 결합”을 푸는 문제였다.
+4. **도메인 이벤트 / 응용 이벤트 / 인프라 이벤트**
+   * 도메인 이벤트
+     * 결제/좋아요 같은 도메인 상태 변화는 엔티티 내부에서 `registerEvent`
+   * 응용(사용자 행동) 이벤트
+     * “사용자가 어떤 행동을 했는지”는 파사드에서 `UserBehaviorEvent` 발행
+   * 인프라 이벤트 핸들러
+     * AFTER\_COMMIT + @Async 로\
+       분석 시스템, 데이터 플랫폼 같은 외부 연동을 메인 트랜잭션 밖으로 분리
+5. **남은 고민**
+   * `AbstractAggregateRoot`를 쓸 때 더티체킹이 아니라\
+     `save()`를 명시적으로 호출해야 하는 번거로움
+   * 이벤트/리스너가 많아졌을 때 구조를 어떻게 단순하게 유지할지
+
+결국, 지금 단계에서 이벤트를 도입할지 고민할 때\
+제가 스스로에게 던지는 질문은 아주 단순해졌습니다.
+
+* 이 일은 정말 지금 이 메서드(혹은 이 도메인)에서 끝까지 책임져야 할까?
+* 아니면 “이런 일이 일어났다”고만 알리고,\
+  이후는 **그 사건에 관심 있는 쪽**에 맡기는 게 더 낫지 않을까?
+
+이번 구현은 그 질문에 “한 번쯤 이벤트로 나눠보자”라고 답해 본 결과물이고,\
+이 글은 그 과정을 정리한 기록 정도로 남겨두고자 합니다.
