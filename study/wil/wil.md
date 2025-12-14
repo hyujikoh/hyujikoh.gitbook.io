@@ -1,7 +1,3 @@
----
-hidden: true
----
-
 # WIL: 이벤트로 관심사 분리와 의사소통 방법
 
 ### 이번주 한 일 <a href="#undefined" id="undefined"></a>
