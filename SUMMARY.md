@@ -71,6 +71,7 @@
   * [좋아요로 시작된 인덱스·캐시·MV 구조 개선 여정](study/tech/mv.md)
   * [Resilience4j 서킷 브레이커, 정말 내 서비스에서 제대로 동작하는가](study/tech/circuitbreaker.md)
   * [도메인 이벤트, 누가 관심을 가질 것인가?](study/tech/event.md)
+  * [kafka deep dive](study/tech/kafka-deep-dive.md)
 * [📓 WIL](study/wil/README.md)
   * [WIL: 오늘도 우리의 과일은 신선한가요? (aka 우리의 테스트 코드는 바로 검증이 가능한걸까요?)](study/wil/fresh-fruit.md)
   * [WIL: 요구사항, E-R , ERD까지, 공사를 위한 설계도 만들기](study/wil/week2.md)
