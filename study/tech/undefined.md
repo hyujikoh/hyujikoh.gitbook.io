@@ -4,7 +4,7 @@ hidden: true
 
 # 프란츠 카프카
 
-### 들어가며 <a href="#undefined" id="undefined"></a>
+## &#x20;<a href="#undefined" id="undefined"></a>
 
 지난주 스프링 로컬 이벤트로 주문 생성 메서드에서 관심사를 분리해봤습니다.\
 결제 도메인에서 각각의 도메인의 행위를(재고 차감, 쿠폰 사용, 행동 추적) 이벤트 기반 분리를 하고나니\
@@ -13,9 +13,14 @@ hidden: true
 `PaymentEntity`에서 직접 `PaymentCompletedEvent`를 발행하고,\
 `OrderEventHandler`와 `DataPlatformEventHandler`에서 각각 관심 있는 부분만 처리하도록 했습니다.
 
-<pre class="language-java"><code class="lang-java">public class PaymentEntity extends BaseEntity {
-<strong>        /**
-</strong>     * 결제 완료 처리 (도메인 이벤트 발행)
+
+
+{% tabs %}
+{% tab title="PaymentEntity" %}
+```java
+public class PaymentEntity extends BaseEntity {
+        /**
+     * 결제 완료 처리 (도메인 이벤트 발행)
      */
     public void completeWithEvent() {
         complete();
@@ -56,8 +61,11 @@ hidden: true
     }
     
 }
+```
+{% endtab %}
 
-
+{% tab title="OrderEventHandler" %}
+```java
 // 주문에 대한 이벤트 핸들러
 @Component
 @Slf4j
@@ -92,8 +100,11 @@ public class OrderEventHandler {
     }
 
 }
+```
+{% endtab %}
 
-
+{% tab title="DataPlatformEventHandler" %}
+```java
 // 데이터 플랫폼 도메인에 대한 이벤트 핸들
 @Component
 @Slf4j
@@ -169,9 +180,9 @@ public class DataPlatformEventHandler {
     }
     
 
-}
-
-</code></pre>
+```
+{% endtab %}
+{% endtabs %}
 
 E2E 테스트까지는 잘 돌았지만, 실제 운영 환경을 생각해보니 한계가 뚜렷했습니다.
 
@@ -187,3 +198,65 @@ E2E 테스트까지는 잘 돌았지만, 실제 운영 환경을 생각해보니
 이전 글에서는 로컬 이벤트에서 배운 "**누군가 관심 있는 과거의 사건**" 철학을,
 
 좀더 확장성있게 했을때도 그대로 유지가 가능하도록 하는 과정을 글로 작성해봤습니다.
+
+
+
+## 1. Kafka 보장 원칙: At-Least-Once + At-Most-Once <a href="#id-1-kafka---at-least-once--at-most-once" id="id-1-kafka---at-least-once--at-most-once"></a>
+
+Kafka를 도입하면서 가장 먼저 고민했던 건 **보장 수준**이었습니다.\
+Kafka는 기본적으로 **At-Least-Once**를 제공하는데, 이게 운영에서 어떤 의미인지 생각해보니 중요한 문제가 생겼습니다.
+
+### Kafka의 고려해야할 기준
+
+1. **At-Least-Once** (기본): 메시지 유실 절대 NO, 중복 가능
+2. **At-Most-Once**: 중복 절대 NO, 유실 가능
+3. **Exactly-Once**: 유실도 중복도 NO (Transactions 필요)
+
+**기존 모놀로직 구조**에서는 이런 보장 수준을 고려하지 않았습니다.\
+`PaymentEntity.completeWithEvent()`에서 `registerEvent()` 처리하면 간단했습니다.
+
+하지만 **격리된 서비스**로 관심사를 나누면서 신경써야할 사항이 생겼습니다.
+
+
+
+### 단순 무식하게 시작한 첫 구성
+
+그래서 처음에는 **최대한 단순하게** 프로듀서와 컨슈머를 나눠봤습니다.
+
+```markdown
+프로듀서: 기존 커머스 플랫폼 API (사용자 API)
+- PaymentCompletedEvent, LikeChangedEvent 발행
+
+컨슈머: 백오피스 서비스 (통계/관리용)
+- Metrics 집계, 사용자 패턴 통게 
+
+토픽 구성:
+- catalog-events (상품 관련): 파티션 1개
+- order-events (주문 관련): 파티션 1개
+```
+
+
+
+```java
+// 프로듀서: 기존 OrderEventHandler에서 확장
+@EventListener
+public void handlePaymentCompleted(PaymentCompletedEvent event) {
+    // 1. 주문 확정 (기존 로직)
+    orderFacade.confirmOrderByPayment(orderId, userId);
+    
+    // 2. Kafka용 Outbox 저장 (신규)
+    savePaymentSuccessToOutbox(event);  // catalog-events 토픽
+}
+
+// 컨슈머: 백오피스에서 수신
+@KafkaListener(topics = "catalog-events")
+public void handleCatalogEvents(String payload) {
+    // 상품 메트릭 집계, 캐시 업데이트
+    metricsService.processCatalogEvent(payload);
+}
+```
+
+**첫 목표**:
+
+1. **로컬 이벤트** → **Kafka 글로벌 이벤트**로 확장 확인
+2. **20,866개 대용량 테스트**로 실제 성능 검증
