@@ -78,6 +78,7 @@
   * [WIL: 요구사항, E-R , ERD까지, 공사를 위한 설계도 만들기](study/wil/week2.md)
   * [WIL: 동시성을 잡기위한 Lock, Lock - Free](study/wil/will4.md)
   * [WIL: 이벤트로 관심사 분리와 의사소통 방법](study/wil/week-7.md)
+  * [WIL: 카프카를 통한 글로벌 이벤트 적용](study/wil/wil.md)
 
 ## REVIEW
 
