@@ -670,7 +670,7 @@ public void cleanupLocks() {
 
 
 
-### 마무리: Kafka 적용 회고 <a href="#kafka--1" id="kafka--1"></a>
+## 마무리: Kafka 적용 회고 <a href="#kafka--1" id="kafka--1"></a>
 
 **앞서 이야기 했던걸 다시한번 이야기 해보면**
 
@@ -683,7 +683,7 @@ public void cleanupLocks() {
 이벤트는 누군가 관심 있는 과거의 사건 이라는 이전 글의 철학을 Kafka로 확장하면서, \
 가장 먼저 고민했던 건 **보장 수준**이었습니다.
 
-### 이번 여정에서 얻은 핵심
+#### 이번 여정에서 얻은 핵심
 
 **1단계**: 직통 `kafkaTemplate.send()` → **유실 + 중복** 문제 발견
 
@@ -701,7 +701,7 @@ public void cleanupLocks() {
 * event\_handled 테이블로 추적성 확보
 * 수동 커밋 과 배치를 통한 리소스 자원 최소화
 
-### 현재 아키텍처 흐름
+#### 현재 아키텍처 흐름
 
 ```
 커머스 API
