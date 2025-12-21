@@ -4,7 +4,7 @@ hidden: true
 
 # 프란츠 카프카
 
-## &#x20;<a href="#undefined" id="undefined"></a>
+## 이 글을 작성하게된 이유: <a href="#undefined" id="undefined"></a>
 
 지난주 스프링 로컬 이벤트로 주문 생성 메서드에서 관심사를 분리해봤습니다.\
 결제 도메인에서 각각의 도메인의 행위를(재고 차감, 쿠폰 사용, 행동 추적) 이벤트 기반 분리를 하고나니\
@@ -259,4 +259,4 @@ public void handleCatalogEvents(String payload) {
 **첫 목표**:
 
 1. **로컬 이벤트** → **Kafka 글로벌 이벤트**로 확장 확인
-2. **20,866개 대용량 테스트**로 실제 성능 검증
+2. 진짜 데이터가 수신이 되는지..?&#x20;
