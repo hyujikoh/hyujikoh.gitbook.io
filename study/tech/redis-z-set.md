@@ -171,7 +171,7 @@ ZINCRBY ranking:all:20251226 0.6*log(totalPrice+1) prod:1003
 
 ***
 
-### 캐시 키 전략: 날짜 단위 분리 + TTL 2일
+#### 캐시 키 전략: 날짜 단위 분리 + TTL 2일
 
 랭킹은 하루 기준으로 쌓입니다.\
 따라서 키를 `ranking:all:{yyyyMMdd}` 형식으로 만들고 **TTL 2일**을 부여했습니다.
@@ -222,11 +222,258 @@ Redis가 만능이라는 착각에서 벗어나,\
 이제 저에게 Redis는 단순 캐시가 아니라,\
 **실시간 데이터를 계산하고 표현하는 레이어**로 자리 잡았습니다.\
 ZSET 하나로 GROUP BY, ORDER BY, 페이징, 정렬을 모두 대체할 수 있었고,\
-MySQL이 버티지 못하던 실시간성의 벽을 부드럽게 넘었습니다.
+MySQL이 버티지 못하던 실시간성을 레디스를 이용해 해결하였습니다.&#x20;
 
-다만 이 흐름이 또 다른 병목을 만들 수도 있습니다.\
-Redis의 강점이 어디까지 유지되고, 언젠가 어떤 순간 ‘느려지기 시작할지’를\
-직접 운영하며 확인하고 있습니다.
+***
+
+## 설계를 기준으로 한 코드 구현 <a href="#id-5--pr" id="id-5--pr"></a>
+
+이번 랭킹서비스 구현을  단순히 “Redis ZSET으로 랭킹을 만들었다”가 아니라,\
+설계한 기능을 위해 Redis ZSET 을 사용하고 **나만의 기준을 조금씩 만들어 간 과정**에 더 가까웠습니다.​
+
+#### 이벤트에서 점수로: 가중치 모델을 코드로 옮기기
+
+먼저 “조회/좋아요/구매를 어떻게 하나의 숫자로 표현할까?”를 코드로 옮기는 작업부터 시작했습니다.​
+
+```java
+// CachePayloads.java
+public enum EventType {
+    PRODUCT_VIEW(0.1),    // 조회: 가장 가볍게
+    LIKE_ACTION(0.2),     // 좋아요: 의도 표현
+    PAYMENT_SUCCESS(0.6); // 구매: 가장 큰 비중
+
+    private final double weight;
+
+    EventType(double weight) {
+        this.weight = weight;
+    }
+
+    public double getWeight() {
+        return weight;
+    }
+}
+
+// 주문 이벤트 점수 로그 정규화
+public static RankingScore forPaymentSuccess(Long productId, BigDecimal totalPrice, long occurredAt) {
+    double normalizedScore = Math.log(totalPrice.doubleValue() + 1);
+    return new RankingScore(productId, EventType.PAYMENT_SUCCESS, normalizedScore, occurredAt);
+}
+
+// 최종 가중 점수
+public double getWeightedScore() {
+    return eventType.getWeight() * score;
+}
+```
+
+조회는 가볍게, 좋아요는 약간 더, 구매는 금액 로그를 곱해서 비중을 줬습니다.​\
+“조회 → 좋아요 → 구매”라는 유저 여정을 숫자 하나로 표현하는 기준을 다음과 같이 코드로 구현했습니다.
+
+***
+
+#### Redis 키 전략과 TTL: 랭킹의 수명 정의하기
+
+“일간 랭킹”이라는 전제를 코드에 어떻게 새길지 고민했고, **키와 TTL**부터 정의했습니다.​
+
+```java
+// CacheKeyGenerator.java
+public String generateDailyRankingKey(LocalDate date) {
+    return new StringJoiner(":")
+            .add("ranking")
+            .add("all")
+            .add(date.format(DateTimeFormatter.BASIC_ISO_DATE)) // 20251226
+            .toString();
+}
+
+// RankingRedisService.java
+private static final Duration RANKING_TTL = Duration.ofDays(2);
+```
+
+* `ranking:all:{yyyyMMdd}` 구조로 날짜별로 완전히 분리.​
+* TTL 2일은 **Carry-Over(오늘→내일)** 를 위한 기간입니다.​
+
+***
+
+#### Kafka → Facade → Domain → Redis 흐름: 레이어드 + DIP를 그대로 가져오기
+
+이번 PR에서는 기존에 정리해 둔 **레이어드 아키텍처 + DIP 구조**를 그대로 Kafka/Redis 쪽에도 끌어왔습니다.​
+
+```java
+// MetricsKafkaConsumer.java - Interface Layer
+@KafkaListener(topics = "catalog-events", containerFactory = KafkaConfig.BATCH_LISTENER)
+public void onCatalogEvents(List<ConsumerRecord<Object, Object>> records, Acknowledgment ack) {
+    List<RankingScore> rankingScores = records.stream()
+            .map(record -> eventProcessingFacade.processCatalogEvent(record.value()))
+            .filter(CatalogEventResult::processed)
+            .map(CatalogEventResult::rankingScore)
+            .toList();
+
+    if (!rankingScores.isEmpty()) {
+        eventProcessingFacade.updateRankingScores(rankingScores, null);
+    }
+    ack.acknowledge();
+}
+```
+
+```java
+// EventProcessingFacade.java - Application Layer
+@Service
+@RequiredArgsConstructor
+public class EventProcessingFacade {
+
+    private final MetricsService metricsService;
+    private final RankingService rankingService;
+    private final EventDeserializer eventDeserializer;
+
+    public CatalogEventResult processCatalogEvent(Object eventValue) {
+        DomainEventEnvelope envelope = eventDeserializer.deserializeEnvelope(eventValue);
+
+        if (!metricsService.tryMarkHandled(envelope.eventId())) {
+            return CatalogEventResult.notProcessed();
+        }
+
+        return switch (envelope.eventType()) {
+            case "PRODUCT_VIEW"   -> processProductView(envelope);
+            case "LIKE_ACTION"    -> processLikeAction(envelope);
+            case "PAYMENT_SUCCESS"-> processPayment(envelope);
+            default               -> CatalogEventResult.notProcessed();
+        };
+    }
+
+    public void updateRankingScores(List<RankingScore> scores, LocalDate date) {
+        rankingService.updateRanking(scores, date);
+    }
+}
+```
+
+```java
+// RankingService.java - Domain Layer
+@Service
+@RequiredArgsConstructor
+public class RankingService {
+
+    private final RankingRedisService rankingRedisService;
+
+    public void updateRanking(List<RankingScore> scores, LocalDate date) {
+        LocalDate targetDate = (date != null) ? date : LocalDate.now();
+        rankingRedisService.updateRankingScoresBatch(scores, targetDate);
+    }
+}
+```
+
+```java
+// RankingRedisService.java - Infrastructure Layer
+@Service
+@RequiredArgsConstructor
+public class RankingRedisService {
+
+    private final StringRedisTemplate redisTemplate;
+    private final CacheKeyGenerator keyGenerator;
+
+    public void updateRankingScoresBatch(List<RankingScore> scores, LocalDate date) {
+        String key = keyGenerator.generateDailyRankingKey(date);
+
+        scores.forEach(score -> 
+            redisTemplate.opsForZSet()
+                .incrementScore(key, score.productId().toString(), score.getWeightedScore())
+        );
+        redisTemplate.expire(key, RANKING_TTL);
+    }
+}
+```
+
+Kafka, Application, Domain, Redis가 **서로 역할만 주고받도록** 만들면서,\
+“랭킹을 어디서 계산하고, 어디에 저장하고, 어디에서 읽을지” 경계가 훨씬 선명해졌습니다.​
+
+***
+
+#### E2E 테스트로 확인한 것들
+
+마지막으로, 이 설계가 “머릿속에서만 동작하는 구조”가 아니라는 것을 E2E 테스트로 검증했습니다.
+
+```java
+// RankingV1ApiE2ETest.java
+@Test
+@DisplayName("랭킹 데이터가 있으면 점수 순으로 상품 목록을 반환한다")
+void should_return_products_in_ranking_order() {
+    // Given
+    rankingRedisService.updateRankingScoresBatch(List.of(
+            new RankingScore(prod1, EventType.PAYMENT_SUCCESS, 100.0, now),
+            new RankingScore(prod2, EventType.LIKE_ACTION, 50.0, now),
+            new RankingScore(prod3, EventType.PRODUCT_VIEW, 10.0, now)
+    ), LocalDate.now());
+
+    // When
+    ResponseEntity<ApiResponse<PageResponse<ProductListResponse>>> response =
+            restTemplate.exchange(Uris.Ranking.GET_RANKING, HttpMethod.GET, null,
+                    new ParameterizedTypeReference<>() {});
+
+    // Then
+    List<ProductListResponse> content = response.getBody().data().content();
+    assertThat(content.get(0).productId()).isEqualTo(prod1);
+    assertThat(content.get(1).productId()).isEqualTo(prod2);
+    assertThat(content.get(2).productId()).isEqualTo(prod3);
+}
+```
+
+```java
+@Test
+@DisplayName("오늘 랭킹이 없으면 어제 랭킹을 반환한다")
+void should_fallback_to_yesterday_when_today_is_empty() {
+    // Given - 어제 랭킹만 있음
+    rankingRedisService.updateRankingScoresBatch(scores, yesterday);
+
+    // When
+    ResponseEntity<...> response =
+            restTemplate.exchange(Uris.Ranking.GET_RANKING, HttpMethod.GET, null,
+                    new ParameterizedTypeReference<>() {});
+
+    // Then
+    assertThat(response.getBody().data().content()).isNotEmpty();
+}
+```
+
+제가 검증하고 싶은 기능을 E2E 테스트를 통해 확인하면서,\
+**Redis를 도입했다** 가 아니라 실시간 랭킹를 위한 설계를 완성하기 위해 \
+Redis 라는 도구를 사용했다는것을 이해했습니다.
 
 
 
+## 마무리: 항아리의 물줄기를 다시 돌아보다 <a href="#undefined" id="undefined"></a>
+
+서론에서 말했던 **"캐시라는 항아리"** 비유로 다시 돌아오고 싶습니다.
+
+처음 이 글을 쓰게 된 계기는 단순했습니다.\
+&#xNAN;**"RDB에서 실시간 랭킹을 뽑아낼 수 있을까?"**\
+GROUP BY와 ORDER BY의 풀스캔을 보며 좌절했고,\
+MV를 붙여봐도 Kafka 이벤트의 실시간성은 잡히지 않았습니다.
+
+Redis를 만나면서 깨달은 건, 캐시는 **임시 저장소**일 뿐이라는 사실입니다.\
+RDB가 큰 물줄기라면, Redis는 그 물줄기를 받아 담는 **작은 항아리**로 인식 했습니다.\
+서버가 재시작되면 깨지고, 자정이 지나면 새로 채워야 합니다.
+
+이번 설계에서 제가 세운 기준들은 바로 **항아리를 어떻게 채우고, 넘쳐 흐르지 않게 관리하는가** 에 대한 답이었습니다:
+
+```
+1. 항아리 채우기: ZINCRBY로 실시간 점수 누적 (가중치 0.1/0.2/0.6)
+2. 날짜별 격리: ranking:all:{yyyyMMdd} + TTL 2일
+3. 깨짐 대비: Carry-Over(23:50 상위 100개 10%)
+4. 구조 보장: Kafka → Facade → Domain → Redis 계층 분리
+```
+
+**가장 중요한 건, Redis가 랭킹을 위한 무조건적인 해결책은 아니라는 점입니다.**\
+진실은 여전히 Kafka와 RDB에 있습니다.\
+Redis는 단지 지금 이 순간 사용자에게 보여줄 가장 빠른 스냅샷 이라 생각합니다.
+
+**결국 제가 얻은 건 도구(Redis)가 아니라, "실시간성을 설계하는 기준"이었습니다.**
+
+* **어떤 데이터를 항아리에 담을 것인가** (가중치 모델)
+* **항아리가 언제 깨질 것인가** (Cold Start)
+* **깨졌을 때 어떻게 사용자에게 보여줄 것인가** (Fallback)
+
+이 기준들은 다음에 또 다른 실시간 문제를 마주했을 때,\
+어떤 도구를 쓰든 방향성을 잡을것이라 생각합니다.
+
+Redis는 훌륭한 항아리였지만,\
+**진짜 중요한 건 물줄기를 어떻게 다루는가**였습니다.\
+그 물줄기가 사용자에게 **지금** 도달할 수 있다면,\
+그게 바로 실시간 시스템의 본질이 아닐까 싶습니다.
