@@ -80,9 +80,10 @@
   * [WIL: 동시성을 잡기위한 Lock, Lock - Free](study/wil/will4.md)
   * [WIL: 이벤트로 관심사 분리와 의사소통 방법](study/wil/week-7.md)
   * [WIL: 카프카를 통한 글로벌 이벤트 적용](study/wil/12-3.md)
-  * [WIL: 방법과 그걸 위한 도구 (aka Redis ZSET)](study/wil/wil-aka-redis-zset.md)
+  * [WIL: 적당한 방법과 그걸 위한 도구 (aka Redis ZSET)](study/wil/wil-aka-redis-zset.md)
 
 ## REVIEW
 
-* [세션 및 컨퍼런스 참여 후기](review/undefined/README.md)
-  * [🏃‍♂️ 러너스 하이와 나의 이야기: 토스 러너스하이 1기를 돌아보며](review/undefined/1.md)
+* [회고 정리](review/undefined.md)
+* [세션 및 컨퍼런스 참여 후기](review/undefined-1/README.md)
+  * [🏃‍♂️ 러너스 하이와 나의 이야기: 토스 러너스하이 1기를 돌아보며](review/undefined-1/1.md)
