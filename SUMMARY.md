@@ -82,6 +82,7 @@
   * [WIL: 이벤트로 관심사 분리와 의사소통 방법](study/wil/week-7.md)
   * [WIL: 카프카를 통한 글로벌 이벤트 적용](study/wil/12-3.md)
   * [WIL: 적당한 방법과 그걸 위한 도구 (aka Redis ZSET)](study/wil/wil-aka-redis-zset.md)
+  * [WIL: 스프링 배치](study/wil/wil.md)
 
 ## REVIEW
 
