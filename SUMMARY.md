@@ -38,7 +38,7 @@
     * [ELK 구축 (1) - APM Agent 이용한 모니터링](study/infra/elk/elk-1.md)
     * [ELK 구축 (2) - fluent bit 를 활용한 로그 모니터링](study/infra/elk/elk-2-fluent-bit.md)
   * [🛳️ Kubernetes](study/infra/kubernetes/README.md)
-    * [pod 리소스 비용  (feat. k8s 1.29)](study/infra/kubernetes/pod-feat.-k8s-1.29.md)
+    * [pod 리소스 비용  (feat. k8s 1.29)](study/infra/kubernetes/undefined.md)
 * [🚚 Back-End](study/back-end/README.md)
   * [☕ Java](study/back-end/java/README.md)
     * [Util](study/back-end/java/util/README.md)
