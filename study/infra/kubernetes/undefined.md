@@ -52,3 +52,47 @@ hidden: true
 | GKE     | <p>– 첫 번째 코어의 6%</p><p>– 다음 코어의 1%(최대 2개 코어)</p><p>– 다음 2개 코어의 0.5%(최대 4개 코어)</p><p>– 4개를 넘는 코어의 0.25%</p>                                                            | <p>– 메모리가 1GiB 미만인 머신의 경우 255MiB 메모리</p><p>– 처음 4GiB 메모리 중 25%</p><p>– 다음 4GiB 메모리 중 20%(최대 8GiB)</p><p>– 다음 8GiB 메모리 중 10%(최대 16GiB)</p><p>– 다음 112GiB 메모리 중 6%(최대 128GiB)</p><p>– 128GiB 이상의 메모리 중 2%</p>                                                                                           |
 | EKS     | GKE 와 동일                                                                                                                                                              | Reserved memory = 255MiB + 11MiB \* MAX\_POD\_PER\_INSTANCE                                                                                                                                                                                                                                           |
 | AKS     | <p>CPU cores on host / Kube-reserved (millicores)</p><p>– 1 /60</p><p>– 2 / 100</p><p>– 4 /140</p><p>– 8 / 180</p><p>– 16 / 260</p><p>– 32 / 420</p><p>– 64 / 740</p> | <p>AKS 1.29 이후</p><p>둘 중 더 낮은 값으로 선택</p><p>•20MB * Max Pods supported on the Node + 50MB•전체 시스템 메모리 리소스의 25%</p><p>AKS 1.29 이전</p><p>– 처음 4GiB 메모리 중 25%</p><p>– 다음 4GiB 메모리 중 20%(최대 8GiB)</p><p>– 다음 8GiB 메모리 중 10%(최대 16GiB)</p><p>– 다음 112GiB 메모리 중 6%(최대 128GiB)</p><p>– 128GiB 이상의 메모리 중 2%</p> |
+
+K8s 1.29 미만 버전(AKS 기준)에서는 메모리 예약에 차등 점감 방식(Regressive Rate)을 사용했습니다.&#x20;
+
+파드를 많이 구성하지 않는 리소스 이면서 k8s 버전도 구 1.29 이전을 사용함으로서 사용을 효율적으로 구성하지 못했던 것이였습니다.
+
+### 3. 해결 과정
+
+최적화 하는 과정은 다음과 같습니다.
+
+#### 변경된 정책 (k8s 1.29+)
+
+AKS 클러스터 내 k8s 버전을 1.29 이상으로 변경하였습니다.
+
+기존 : 전체 메모리의 25% 를 예약 리소스로 사용
+
+변경 : 노드내 (max Pods \* 20MB) + 50MB
+
+#### 노드 내 Max Pods 변경
+
+AKS 내에 노드는 별도 명시가 없지 않는 이상 max Pod 는 110개가 default 입니다.
+
+기본값인 110개는 소형 노드에 과분했기에, 이를 현실적인 수치인 **30개**로 줄였습니다.
+
+* **Before (v. 1.28 이하, MaxPod 110):** Allocatable **5.23 GB**
+* **After (v. 1.29 이상 , MaxPod 30):** Allocatable **7.02 GB**
+
+단순한 버전 업그레이드와 설정 변경만으로 **노드당 약 1.7GB의 메모리를 확보했습니다.** 소형 노드 뿐만 아니라 64 GB 이상 의 메모리를 구성한 노드에서도 마찬가지로 기대이상의 리소스 가용성을 확보했습니다. **약 30 % \~ 최대 50% 정도**의 리소스를 개선 하게 된 것이었습니다.
+
+### 결론 : 인프라 개선 성과
+
+이번 작업을 통해 다음과 같은 성과를 얻었습니다.&#x20;
+
+1. 각 노드의 리소스 가용성 확보 : 각 노드의 리소스를 더 효율적이게 운영할 수 있는 발판을 만들었습니다.
+2. 비용 절감 : 실대 일부 노드는 반납을 하는것이 가능하다는 판단을 내리고 서비스 운영 비용을 절감하였습니다.
+
+꽤나 단순한 방법으로 문제를 해결하였지만, 이 과정까지 오는데 생각보다 많은 과정이 있었습니다.(존재하지 않는 이전 히스토리, 인수 담당자, 인프라에 대해서 명확히 알지 못하는 인원들 등등)
+
+단순한 버전 업이라고 하지만 이처럼 보이지 않는 비용 효율성을 개선 하는 중요한 작업이 될 수 있었습니다.
+
+### Reference
+
+* [SKT Enterprise - Kubernetes Node Resource 관리](https://www.sktenterprise.com/bizInsight/blogDetail/dev/4488)
+* [Accordion - 효율적인 쿠버네티스 설계: 노드 용량 산정](https://accordions.co.kr/accordion_tip/node-capacity-allocatable/)
+* [Azure AKS Node Resource Reservations](https://learn.microsoft.com/en-us/azure/aks/node-resource-reservations)
