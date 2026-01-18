@@ -56,7 +56,6 @@
 기본 DataSource 설정과 Hibernate 멀티테넌시 설정을 정의 합니다. 중요한 점은 `multi_tenant_connection_provider`와 `tenant_identifier_resolver`를 YAML에 직접 지정하지 않고, `JpaConfig`에서 Spring Bean으로 주입한다는 것입니다.&#x20;
 
 ```yaml
-
 spring:
   config:
     activate:
@@ -87,7 +86,6 @@ spring:
 요청 스레드별로 현재 스키마 이름을 안전하게 저장하고 관리합니다.
 
 ```java
-
 package com.example.multischema.context;
 
 public class SchemaContextHolder {
@@ -113,7 +111,6 @@ public class SchemaContextHolder {
 Spring MVC의 `HandlerInterceptor`를 구현하여 모든 HTTP 요청을 가로채고 스키마 검증을 수행합니다.
 
 ```java
-
 package com.example.multischema.interceptor;
 
 import com.example.multischema.context.SchemaContextHolder;
@@ -185,7 +182,6 @@ public class SchemaValidationInterceptor implements HandlerInterceptor {
 Hibernate가 현재 어떤 스키마를 사용해야 하는지 물어볼 때 호출되는 컴포넌트입니다.
 
 ```java
-
 package com.example.multischema.config.datasource;
 
 import com.example.multischema.context.SchemaContextHolder;
@@ -215,7 +211,6 @@ public class TenantIdentifierResolver implements CurrentTenantIdentifierResolver
 해당 컴포넌트는 **동적 스키마 전환을 수행하기 위한 핵심 컴포넌트 입니다**. 단일 DataSource에서 커넥션을 가져온 후, `USE <schema_name>` 쿼리를 실행하여 스키마를 동적으로 변경합니다. 이를 통해 수백개의 스키마를 처리하여도 문제없이 동적으로 변환이 가능합니다.
 
 ```java
-
 package com.example.multischema.config.datasource;
 
 import org.hibernate.engine.jdbc.connections.spi.MultiTenantConnectionProvider;
@@ -302,7 +297,6 @@ public class SchemaMultiTenantConnectionProvider implements MultiTenantConnectio
 Spring이 관리하는 Bean 인스턴스들을 Hibernate EntityManagerFactory에 직접 주입을 하는데, 이전에 yaml 파일에 작성하였을때 발생하는 오류를 Hibernate가 직접 인스턴스화 하여 해결을 합니다.
 
 ```java
-
 package com.example.multischema.config;
 
 import com.example.multischema.config.datasource.SchemaMultiTenantConnectionProvider;
@@ -363,7 +357,6 @@ public class JpaConfig {
 인터셉터를 Spring MVC 체인에 등록합니다.
 
 ```java
-
 package com.example.multischema.config;
 
 import com.example.multischema.interceptor.SchemaValidationInterceptor;
@@ -394,7 +387,6 @@ public class WebConfig implements WebMvcConfigurer {
 `createdAt`, `updatedAt` 컬럼에 MySQL 기본값을 명시적으로 설정하여 DB 레벨에서 기본값이 보장되도록 합니다.
 
 ```java
-
 package com.example.multischema.domain.common;
 
 import jakarta.persistence.Column;
@@ -450,7 +442,6 @@ public class BaseEntity {
 
 
 ```java
-
 package com.example.multischema.domain.product;
 
 import com.example.multischema.domain.common.BaseEntity;
@@ -499,7 +490,6 @@ public class Product extends BaseEntity {
 ### 9. Repository 및 Service 예시
 
 ```java
-
 package com.example.multischema.domain.product;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -519,11 +509,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 }
 ```
 
-```
-```
-
 ```java
-
 package com.example.multischema.domain.product;
 
 import lombok.RequiredArgsConstructor;
@@ -585,7 +571,6 @@ public class ProductService {
 ### 10. Controller 예시
 
 ```java
-
 package com.example.multischema.api;
 
 import com.example.multischema.domain.product.Product;
@@ -686,10 +671,8 @@ public class ProductController {
 
 ### 11. 메인 애플리케이션 클래스
 
-```java
-
-package com.example.multischema;
-
+<pre class="language-java"><code class="lang-java"><strong>package com.example.multischema;
+</strong>
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -700,7 +683,7 @@ public class MultiSchemaApplication {
         SpringApplication.run(MultiSchemaApplication.class, args);
     }
 }
-```
+</code></pre>
 
 ### 사용 방법 <a href="#undefined" id="undefined"></a>
 
@@ -708,21 +691,21 @@ public class MultiSchemaApplication {
 
 **기본 스키마 사용 (헤더 없음)**
 
-```
-bashGET http://localhost:8080/api/products?page=0&size=10
+```bash
+GET http://localhost:8080/api/products?page=0&size=10
 ```
 
 **특정 스키마 사용**
 
-```
-bashGET http://localhost:8080/api/products?page=0&size=10
+```bash
+GET http://localhost:8080/api/products?page=0&size=10
 datasource: tenant_a
 ```
 
 **다른 스키마 사용**
 
-```
-bashPOST http://localhost:8080/api/products
+```bash
+POST http://localhost:8080/api/products
 Content-Type: application/json
 datasource: tenant_b
 
@@ -736,8 +719,8 @@ datasource: tenant_b
 
 **존재하지 않는 스키마 (오류 발생)**
 
-```
-bashGET http://localhost:8080/api/products
+```bash
+GET http://localhost:8080/api/products
 datasource: non_existent_schema
 # 응답: 400 Bad Request
 ```
@@ -750,8 +733,8 @@ datasource: non_existent_schema
 
 **해결**: `JpaConfig`의 `setPackagesToScan`에 모든 엔티티 패키지 포함
 
-```
-javaem.setPackagesToScan("com.example.multischema.domain");
+```java
+em.setPackagesToScan("com.example.multischema.domain");
 ```
 
 ### 2. 스키마 전환이 안 되는 경우
@@ -760,8 +743,8 @@ javaem.setPackagesToScan("com.example.multischema.domain");
 
 **해결**: `application.yml`에 지연된 커넥션 획득 설정 추가
 
-```
-textspring.jpa.properties.hibernate:
+```yaml
+spring.jpa.properties.hibernate:
   connection.provider_disables_autocommit: true
   connection.handling_mode: DELAYED_ACQUISITION_AND_RELEASE_AFTER_TRANSACTION
 ```
