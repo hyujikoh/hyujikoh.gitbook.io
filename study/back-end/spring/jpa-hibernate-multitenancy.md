@@ -27,7 +27,7 @@
 * **새로운 스키마 추가 시 코드 변경 및 재배포 필요**
 * **각 DataSource마다 별도 커넥션 풀로 인한 리소스 낭비**
 
-> 물론 내가 좀더 조사를 해보고 관련된 레퍼런스 및 문서를 꼼꼼하게 봤다면 ARDS 를 이용해 구현이 가능했겠지만, 아쉽게도 다음 기회를 통해 해보는 시간이 있었음 바란다.&#x20;
+> 물론 내가 좀더 조사를 해보고 관련된 레퍼런스 및 문서를 꼼꼼하게 봤다면 ARDS 를 이용해 구현이 가능했겠지만, 아쉽게도 다음 기회를 통해 해보는 시간이 있었음 했습니다.&#x20;
 
 이러한 이유 때문에 보다 간결하면서 설정이 가능한 레퍼런스를 찾다 선택한 것이 MultiTenancy 였습니다.
 
@@ -41,7 +41,7 @@
 
 ### 서비스 핵심 컴포넌트 <a href="#undefined" id="undefined"></a>
 
-전체 아키텍처는 다음과 같은 핵심 컴포넌트들로 구성된다:
+전체 아키텍처는 다음과 같은 핵심 컴포넌트들로 구성했습니다.
 
 1. **SchemaValidationInterceptor**: HTTP 요청 가로채기 및 스키마 검증
 2. **SchemaContextHolder**: ThreadLocal 기반 스키마 컨텍스트 관리
@@ -128,7 +128,7 @@ public class SchemaValidationInterceptor implements HandlerInterceptor {
     
     private final JdbcTemplate defaultJdbcTemplate;
     
-    // 스키마가 없을 경우 설정하는 디폴트 스
+    // 스키마가 없을 경우 설정하는 디폴트 스키마
     private static final String DEFAULT_SCHEMA_NAME = "main_db";
     
     public SchemaValidationInterceptor(@Qualifier("dataSource") DataSource defaultDataSource) {
