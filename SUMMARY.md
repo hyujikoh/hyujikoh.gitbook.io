@@ -87,6 +87,7 @@
   * [WIL: 스프링 배치](study/wil/wil.md)
   * [WIL: Claude Code 적용](study/wil/wil-claude-code.md)
   * [WIL: 이번주 공부(1월 3주차)](study/wil/wil-1-3.md)
+  * [WIL: 1월 4주차](study/wil/wil-1-4.md)
 
 ## REVIEW
 
