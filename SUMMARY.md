@@ -32,7 +32,7 @@
 ## Study
 
 * [Tools](study/tools/README.md)
-  * [Lighthouse  를 이용한 화면 응답 속도 개선](study/tools/lighthouse.md)
+  * [Lighthouse  를 이용한 문제 정의 및 랜더링 속도 개선](study/tools/lighthouse.md)
 * [Infra](study/infra/README.md)
   * [👓 ELK](study/infra/elk/README.md)
     * [ELK 구축 (1) - APM Agent 이용한 모니터링](study/infra/elk/elk-1.md)
