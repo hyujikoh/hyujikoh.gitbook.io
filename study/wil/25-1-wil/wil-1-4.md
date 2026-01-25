@@ -1,7 +1,3 @@
----
-hidden: true
----
-
 # WIL: 이번주 공부 (1월 4주차)
 
 ### 이번주 WIL 정리 <a href="#wil" id="wil"></a>
