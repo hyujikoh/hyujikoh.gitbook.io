@@ -66,7 +66,7 @@
       * [JWT with Java Spring 프로젝트 만들기(1) 토큰 생성](study/back-end/undefined/jwt/jwt-with-java-spring-1.md)
       * [JWT with Java Spring 프로젝트 만들기(2) 토큰 유효성 검증](study/back-end/undefined/jwt/jwt-with-java-spring-2.md)
 * [🖋️ Tech](study/tech/README.md)
-  * [단위 테스트가 많을수록 좋을까? 🤔 피라미드 vs 트로피, 우리 팀에 맞는 전략 찾기](study/tech/vs.md)
+  * [단위 테스트가 많을수록 좋을까? 피라미드 vs 트로피, 우리 팀에 맞는 전략 찾기](study/tech/vs.md)
   * [멱등성에서 시작해 동시성까지 제어해야할 문제를 정의](study/tech/concurrency_idempotent.md)
   * [DDD, 이제는 쉽게: 책임과 관계로 풀어낸 도메인 설계 원칙](study/tech/ddd.md)
   * [우리 서비스는 Lock이 정말 필요한가? - 동시성 제어의 선택과 트레이드오프](study/tech/lock.md)
