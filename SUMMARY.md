@@ -89,7 +89,6 @@
     * [WIL: Claude Code 적용](study/wil/25-1-wil/wil-claude-code.md)
     * [WIL: 이번주 공부(1월 3주차)](study/wil/25-1-wil/wil-1-3.md)
     * [WIL: 이번주 공부 (1월 4주차)](study/wil/25-1-wil/wil-1-4.md)
-    * [WIL: 이번주 공부 (1월 4주차)](study/wil/25-1-wil/wil-1-4-1.md)
     * [이번주 공부 (1월 5주차)](study/wil/25-1-wil/1-5.md)
 
 ## REVIEW
