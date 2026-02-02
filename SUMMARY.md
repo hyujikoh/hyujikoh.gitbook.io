@@ -85,11 +85,12 @@
   * [WIL: 카프카를 통한 글로벌 이벤트 적용](study/wil/12-3.md)
   * [WIL: 적당한 방법과 그걸 위한 도구 (aka Redis ZSET)](study/wil/wil-aka-redis-zset.md)
   * [WIL: 스프링 배치](study/wil/wil.md)
-  * [25년 1월 WIL](study/wil/25-1-wil/README.md)
-    * [WIL: Claude Code 적용](study/wil/25-1-wil/wil-claude-code.md)
-    * [WIL: 이번주 공부(1월 3주차)](study/wil/25-1-wil/wil-1-3.md)
-    * [WIL: 이번주 공부 (1월 4주차)](study/wil/25-1-wil/wil-1-4.md)
-    * [이번주 공부 (1월 5주차)](study/wil/25-1-wil/1-5.md)
+  * [26년 1월 WIL](study/wil/26-1-wil/README.md)
+    * [WIL: Claude Code 적용](study/wil/26-1-wil/wil-claude-code.md)
+    * [WIL: 이번주 공부(1월 3주차)](study/wil/26-1-wil/wil-1-3.md)
+    * [WIL: 이번주 공부 (1월 4주차)](study/wil/26-1-wil/wil-1-4.md)
+    * [이번주 공부 (1월 5주차)](study/wil/26-1-wil/1-5.md)
+  * [26년 2월  WIL](study/wil/26-2-wil.md)
 
 ## REVIEW
 
