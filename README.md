@@ -29,5 +29,5 @@ layout:
 
 #### Blog : [https://hyujikoh-history.gitbook.io](https://hyujikoh-history.gitbook.io)
 
-#### LinkedIn : [PROFILE LINK ](https://www.linkedin.com/in/%ED%98%84%EC%A7%81-%EC%98%A4-306b601a2/)
+#### LinkedIn : [OH HYUN JIK](https://www.linkedin.com/in/%ED%98%84%EC%A7%81-%EC%98%A4-306b601a2/)
 
