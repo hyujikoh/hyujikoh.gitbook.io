@@ -34,3 +34,60 @@
 
 **최종 목적은 "왜 이렇게 판단했고, 어디서 막혔고, 어떻게 풀었는지"** 그 고민의 과정을 담으려 했습니다.
 
+
+
+## 중복 쿼리: Hibernate SQL과 P6Spy
+
+운영 서버에서  일부 설정 오류로 Hibernate SQL 과 P6Spy 둘다 활성화가 되어있어서 \
+중복 쿼리가 2번이나 발생하는 상황이 발생하였습니다.
+
+로그는 아래와 같은 형식으로 연속으로 발생하였습니다.&#x20;
+
+<pre class="language-log"><code class="lang-log"><strong>// Hibernate SQL (org.hibernate.SQL=DEBUG)
+</strong>Hibernate:
+    select p.id, p.name, p.price
+    from product p
+    where p.id = ?
+
+// P6Spy
+[statement] | 3 ms | select p.id, p.name, p.price from product p where p.id = 42
+
+</code></pre>
+
+&#x20;같은 쿼리이지만 실제 다른 출력행태를 가지고 있었습니다.&#x20;
+
+Hibernate는 \`?\`로 파라미터를 표시하고, P6Spy는 실제 값 \`42\`가 바인딩된 완성된 SQL을 보여줍니다. \
+왜 이런 차이가 발생하는지 이해하기 위해, 두 도구가 SQL을 캡처하는 위치를 파악 했습니다.
+
+<figure><img src="../../.gitbook/assets/image.png" alt=""><figcaption></figcaption></figure>
+
+**Hibernate SQL 로깅**은 JPA 내부에서 JPQL을 SQL로 변환한 시점에 기록합니다. \
+아직 JDBC 드라이버에 전달하기 전이라, 파라미터는 `?` 플레이스홀더 상태입니다. \
+바인딩된 실제 값을 보려면 `org.hibernate.type.descriptor.sql=TRACE` 레벨을 별도로 설정해야 합니다.
+
+**P6Spy**는 JDBC DataSource를 프록시로 래핑하는 방식입니다. \
+어플리케이션과 실제 JDBC 드라이버 사이에 끼어들어서, 드라이버에 전달되기 직전의 완성된 SQL을 캡처합니다. \
+그렇기 때문에 파라미터가 이미 바인딩된 상태이고, 실행 시간(ms)까지 측정할 수 있습니다.
+
+<table><thead><tr><th width="151">구분</th><th width="241" align="center">Hibernate SQL</th><th width="346" align="center">P6Spy</th></tr></thead><tbody><tr><td>파라미터 바인딩</td><td align="center"><code>?</code> 표시 (별도 TRACE 설정 필요)</td><td align="center">실제 값이 바인딩된 완성 SQL</td></tr><tr><td>대상 범위</td><td align="center">Hibernate가 생성한 SQL만</td><td align="center">MyBatis, Native Query 등 JDBC 전체</td></tr><tr><td>실행 시간</td><td align="center">미제공</td><td align="center">쿼리별 실행 시간(ms) 측정</td></tr><tr><td>커넥션 정보</td><td align="center">미제공</td><td align="center">커넥션 ID, 카테고리 포함</td></tr><tr><td>로그 레벨</td><td align="center"><code>DEBUG</code></td><td align="center"><code>INFO</code></td></tr><tr><td>설정 방법</td><td align="center"><code>logging.level.org.hibernate.SQL</code></td><td align="center">의존성 추가만으로 자동 활성화</td></tr></tbody></table>
+
+여기서 주목할 점은 **로그 레벨 차이**입니다.
+
+Hibernate SQL은 `DEBUG` 레벨로 출력하고, P6Spy는 `INFO` 레벨로 출력합니다. \
+운영 환경에서 root 로그 레벨이 `INFO`라면, Hibernate SQL(`DEBUG`)은 자동으로 안 보이지만 \
+P6Spy(`INFO`)는 그대로 출력됩니다. \
+즉 "운영에서는 Hibernate SQL이 안 보이니까 괜찮다"고 넘어갈 수 있지만, \
+**P6Spy는 별도로 꺼주지 않으면 운영에서도 모든 SQL을 로깅**하게 됩니다.
+
+#### P6Spy가 Hibernate SQL의 상위 호환인가?
+
+기능 비교만 놓고 보면 그렇습니다. P6Spy는 Hibernate SQL이 하는 일을 모두 포함하면서, \
+바인딩 파라미터와 실행 시간까지 추가로 제공합니다. \
+여기에 더해 MyBatis나 Native Query처럼 Hibernate를 거치지 않는 SQL까지 캡처합니다.
+
+다만 트레이드오프가 있습니다. P6Spy는 DataSource를 프록시로 래핑하는 방식이기 때문에, **로그를 출력하지 않더라도 프록시 오버헤드는 존재**합니다. 모든 SQL이 프록시 레이어를 한 번 더 거치게 되는 것입니다. 개발 환경에서는 무시해도 될 수준이지만, 운영 환경에서는 로그 레벨을 높이는 것만으로는 부족하고, 프록시 자체를 비활성화하는 것이 맞다고 판단했습니다.
+
+#### Hibernate SQL은 끄고, P6Spy로 통합
+
+대부분의 레퍼런스에서도 Hibernate SQL은 운영에서 사용하지 말라고 권장하였기 때문에. P6Spy 하나로 통합하고, Hibernate SQL 로깅은 전체 프로필에서 `warn`으로 올려 비활성화했습니다. \
+실제 프로필별 로깅 전략을 어떻게 나눴는지는 다음장에서 소개 하겠습니다.
