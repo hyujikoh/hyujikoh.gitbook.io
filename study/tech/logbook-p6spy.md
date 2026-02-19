@@ -89,5 +89,31 @@ P6Spy(`INFO`)는 그대로 출력됩니다. \
 
 #### Hibernate SQL은 끄고, P6Spy로 통합
 
-대부분의 레퍼런스에서도 Hibernate SQL은 운영에서 사용하지 말라고 권장하였기 때문에. P6Spy 하나로 통합하고, Hibernate SQL 로깅은 전체 프로필에서 `warn`으로 올려 비활성화했습니다. \
-실제 프로필별 로깅 전략을 어떻게 나눴는지는 다음장에서 소개 하겠습니다.
+대부분의 레퍼런스에서도 Hibernate SQL은 운영에서 사용하지 말라고 권장하였기 때문에. P6Spy 하나로 통합하고, Hibernate SQL 로깅은 전체 프로필에서 `warn`으로 올려 비활성화했습니다.&#x20;
+
+실제 프로필별 로깅 전략은 다음과 같이 정리하였습니다.
+
+* **Hibernate SQL**: 전체 프로필에서 `warn`으로 비활성화
+* **P6Spy**: 개발 환경에서만 활성화, 운영 환경에서는 `enable-logging: false`로 비활성화
+
+```yaml
+# application-dev.yml
+logging.level:
+  org.hibernate:
+    SQL: warn    # debug → warn
+
+# application-prod.yml
+decorator:
+  datasource:
+    p6spy:
+      enable-logging: false
+```
+
+운영 환경에서 로그 레벨만 올리지 않고 `enable-logging: false`를 사용한 이유는 다음과 같습니다.\
+로그 레벨을 올리면 출력은 막을 수 있지만, `p6spy-spring-boot-starter`가 DataSource를 `P6DataSource`로 래핑하는 것까지는 막지 못합니다. 그렇게 되면 모든 SQL이 프록시 레이어를 거치는 오버헤드가 그대로 남게 됩니다. `enable-logging: false` 설정은 이 래핑 자체를 하지 않도록 해줍니다.
+
+정리하면 다음과 같습니다.
+
+<table><thead><tr><th width="113">프로필</th><th align="center">Hibernate SQL</th><th align="center">P6Spy</th><th>SQL 출력</th></tr></thead><tbody><tr><td> dev</td><td align="center">OFF (<code>warn</code>)</td><td align="center">ON</td><td>P6Spy만 (바인딩된 완성 SQL)</td></tr><tr><td>prod</td><td align="center">OFF (<code>warn</code>)</td><td align="center"><strong>OFF</strong></td><td>SQL 로그 없음, 프록시 오버헤드 없음</td></tr></tbody></table>
+
+다음 해결해야하는 영역은 HTTP 계층, Logbook의 불필요한 로그를 정리한 과정을 다루었습니다.
