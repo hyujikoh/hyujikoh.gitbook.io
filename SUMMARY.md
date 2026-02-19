@@ -77,6 +77,7 @@
   * [내 카프카는 정말 쓸 값어치가 있는것일까?](study/tech/undefined.md)
   * [적절한 상황에 적절한 도구 사용 (Redis ZSET)](study/tech/redis-z-set.md)
   * [우리 배치는 정말 필요해서 만든건가?](study/tech/spring-batch.md)
+  * [어플리케이션 로그, 줄여야 보인다: Logbook과 P6Spy 리팩토링으로 로그 정리](study/tech/logbook-p6spy.md)
 * [📓 WIL](study/wil/README.md)
   * [WIL: 오늘도 우리의 과일은 신선한가요? (aka 우리의 테스트 코드는 바로 검증이 가능한걸까요?)](study/wil/fresh-fruit.md)
   * [WIL: 요구사항, E-R , ERD까지, 공사를 위한 설계도 만들기](study/wil/week2.md)
