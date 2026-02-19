@@ -7,7 +7,8 @@ description: >-
 
 # HttpMessageConversionException 오류 해결
 
-문제 \
+## 문제 상황
+
 UnHandled Exception org.springframework.http.converter.HttpMessageConversionException: Type definition error 가 발생 했다.
 
 ```java
@@ -63,13 +64,13 @@ Caused by: com.fasterxml.jackson.databind.exc.InvalidDefinitionException: No ser
 
 
 
-원인
+## 원인
 
 DTO 클래스가 JSON 직렬화를 지원하지 생기지 않는 에러로 확인
 
 
 
-해결
+## 해결
 
 DTO 클래스에 `@Getter` 추가함으로 직렬화 지원
 
