@@ -9,7 +9,7 @@
 
 오늘 소개할 서비스의 HTTP 요청/응답은 LogBook 을 이용해 관리하고, \
 어플리케이션에서 실행되는 쿼리 로깅은 P6Spy 가 각각 책임을 갖도록 구성 하였고, \
-각 ThreadLocal 에 상관관계 id 를 부여함으로 스레드 별로 로그를 추척 할 수 있게 구성하였습니다.
+각 ThreadLocal 에 상관관계 ID 를 부여함으로 스레드 별로 로그를 추척 할 수 있게 구성하였습니다.
 
 **정보는 최대한 많이 남겨두는 게 좋다**고 생각했습니다.\
 장애가 발생했을 때 로그가 부족해서 원인을 못 찾는 것보다는, \
@@ -109,11 +109,162 @@ decorator:
       enable-logging: false
 ```
 
-운영 환경에서 로그 레벨만 올리지 않고 `enable-logging: false`를 사용한 이유는 다음과 같습니다.\
-로그 레벨을 올리면 출력은 막을 수 있지만, `p6spy-spring-boot-starter`가 DataSource를 `P6DataSource`로 래핑하는 것까지는 막지 못합니다. 그렇게 되면 모든 SQL이 프록시 레이어를 거치는 오버헤드가 그대로 남게 됩니다. `enable-logging: false` 설정은 이 래핑 자체를 하지 않도록 해줍니다.
+운영 환경에서 로그 레벨만 올리지 않고 `enable-logging: false`를 사용한 이유는 다음과 같습니다.
+
+* 로그 레벨을 올리면 출력은 막을 수 있지만, `p6spy-spring-boot-starter`가 DataSource를 `P6DataSource`로 Wrapping 하는 것까지는 막지 못합니다.&#x20;
+* 그렇게 되면 모든 SQL이 프록시 레이어를 거치는 오버헤드가 그대로 남기 때문에, \
+  이를 위해 설정한  `enable-logging: false` 설정은 이 래핑 자체를 하지 않도록 해줍니다.
 
 정리하면 다음과 같습니다.
 
 <table><thead><tr><th width="113">프로필</th><th align="center">Hibernate SQL</th><th align="center">P6Spy</th><th>SQL 출력</th></tr></thead><tbody><tr><td> dev</td><td align="center">OFF (<code>warn</code>)</td><td align="center">ON</td><td>P6Spy만 (바인딩된 완성 SQL)</td></tr><tr><td>prod</td><td align="center">OFF (<code>warn</code>)</td><td align="center"><strong>OFF</strong></td><td>SQL 로그 없음, 프록시 오버헤드 없음</td></tr></tbody></table>
 
-다음 해결해야하는 영역은 HTTP 계층, Logbook의 불필요한 로그를 정리한 과정을 다루었습니다.
+## Logbook 기반 HTTP 로깅 개선 — URL 제외가 동작하지 않았던 이유
+
+다음 HTTP 로깅 개선에 대해 설명을 드리기 전 프로젝트에서 사용중인 logbook 에 대해서 설명드리겠습니다.
+
+#### Logbook이란
+
+[Logbook](https://github.com/zalando/logbook)은 Zalando에서 만든 HTTP 요청/응답 로깅 라이브러리입니다. Spring Boot의 기본 HTTP 로깅과는 달리, 요청 본문(body)과 응답 본문을 함께 기록해주고, JSON pretty print, 헤더 마스킹, 조건부 필터링 같은 기능을 제공합니다.
+
+서비스에서는 Logbook을 다음과 같이 구성하고 있었습니다.
+
+```java
+@Configuration
+public class LogbookConfig {
+    public static final String[] NOT_LOGGING_URIS = {
+        /**
+        허용하지 않을 URI 배열
+        **/
+    }
+    @Bean
+    public Logbook logbook() {
+        Predicate<HttpRequest> excludeUris =
+            exclude(stream(NOT_LOGGING_URIS).map(Conditions::requestTo));
+
+        return Logbook.builder()
+                .bodyFilter(new PrettyPrintingJsonBodyFilter())
+                .condition(excludeUris)
+                .build();
+    }
+}
+```
+
+`NOT_LOGGING_URIS`에 정의된 URI은 로깅에서 제외하고, \
+나머지 요청에 대해 JSON body를 포맷팅해서 기록하는 구조입니다. \
+앞서 소개한 상관관계 ID와 함께 사용하면, \
+특정 요청이 어떤 body로 들어와서 어떤 응답을 내려줬는지 스레드 단위로 추적할 수 있습니다.
+
+문제는 모든 http 요청과 응답을 이미 `NOT_LOGGING_URIS`  로 제외 설정은 해놨다고 생각했지만. \
+불필요한 요청과 응답이 계속해서 로깅 되는것이 확인되었습니다.
+
+이 문제를 해결하기 위해 설정 파일을 다시 한번 확인 해봤습니다.
+
+기존 코드를 열어보니 Swagger UI의 리소스를 **개별 파일 단위로 20개** 나열하고 있었습니다.
+
+```java
+public static final String[] NOT_LOGGING_URIS = {
+    HEALTH_CHECK,
+    SWAGGER_UI_ROOT,          // "/swagger-ui"
+    SWAGGER_UI,               // "/swagger-ui/swagger-ui.html"
+    SWAGGER_INDEX_HTML,       // "/swagger-ui/index.html"
+    SWAGGER_INDEX_CSS,        // "/swagger-ui/index.css"
+    // ... 총 20개 개별 파일
+};
+```
+
+문제는 두 가지였습니다.
+
+첫째, Swagger UI는 브라우저에서 로딩할 때 `oauth2-redirect.html`, ES 번들 등 목록에 없는 리소스도 추가로 요청합니다. 개별 나열로는 새로 추가되는 리소스를 매번 따라잡을 수 없었습니다.
+
+둘째, URL 인코딩 불일치 문제가 있었습니다.
+
+```java
+public static final String SWAGGER_API_DOCS_GENERATED_API = SWAGGER_API_DOCS + "/Generated API";
+// 패턴: "/v3/api-docs/Generated API" (공백 포함)
+// 실제 요청: "/v3/api-docs/Generated%20API" (URL 인코딩)
+// → 매칭 실패
+```
+
+공백이 포함된 경로를 그대로 상수로 정의했기 때문에, 실제 요청의 URL 인코딩된 경로와 매칭되지 않았습니다.
+
+#### Logbook은 glob 패턴을 지원한다
+
+해결 방법을 찾기 위해 Logbook의 `Conditions.requestTo()` 내부 구현을 확인했습니다.\
+`javap -c -p`로 바이트코드를 디컴파일한 결과, 내부적으로 `Glob.compile()`을 호출하고 있었고, \
+이 `Glob` 클래스는 다음과 같은 패턴 변환 규칙을 갖고 있었습니다.
+
+| Glob 패턴   | 정규식 변환    | 설명             |
+| --------- | --------- | -------------- |
+| `/**` (끝) | `(/.*)?$` | 하위 모든 경로 (선택적) |
+| `/*` (끝)  | `/[^/]*$` | 단일 세그먼트        |
+| `*`       | `[^/]*?`  | 임의 문자 (경로 제외)  |
+
+즉 `/swagger-ui/**`로 작성하면 `/swagger-ui` 하위의 모든 경로가 한 줄로 매칭됩니다.
+
+#### 수정: 20개 나열에서 glob 패턴 5개로
+
+```java
+// 수정 전 - 20개 개별 파일 나열
+public static final String[] NOT_LOGGING_URIS = {
+    HEALTH_CHECK, SWAGGER_UI_ROOT, SWAGGER_UI,
+    SWAGGER_INDEX_HTML, SWAGGER_INDEX_CSS, ... // 20개
+};
+
+// 수정 후 - Glob 패턴 5개
+public static final String[] NOT_LOGGING_URIS = {
+    HEALTH_CHECK,        // /health/check
+    "/swagger-ui/**",    // swagger-ui 하위 모든 리소스
+    "/v3/api-docs/**",   // API docs 하위 모든 리소스
+    API_DOC_HTML,        // /static/docs/index.html
+    FAVICON              // /favicon.ico
+    /**
+    그 이외 정책적으로 불필요한 플랫폼 api  
+    **/
+};
+```
+
+20개를 나열해도 빠지는 것이 있었는데, glob 패턴 5개로 줄이니 오히려 누락 없이 전부 매칭되었습니다.
+
+#### GET 요청 제외
+
+URL 제외를 정리하고 나니, 다음으로 눈에 띈 것은 GET 요청 로그였습니다.
+
+서비스 특성상 조회 API가 대부분이라 GET 요청의 요청/응답 로그가 로그의 상당 부분을 차지하고 있었습니다. 반면 문제가 발생했을 때 추적이 필요한 것은 데이터를 변경하는 POST, PUT, DELETE 요청이었습니다.
+
+Logbook의 `Conditions` 클래스는 URL 패턴뿐 아니라 HTTP 메서드 기반 필터링도 제공하고 있었습니다.
+
+```java
+@Bean
+public Logbook logbook() {
+    Predicate<HttpRequest> excludeUris =
+        exclude(stream(NOT_LOGGING_URIS).map(Conditions::requestTo));
+    Predicate<HttpRequest> excludeGet =
+        exclude(Conditions.requestWithMethod("GET"));
+
+    return Logbook.builder()
+            .bodyFilter(new PrettyPrintingJsonBodyFilter())
+            .condition(excludeUris.and(excludeGet))
+            .build();
+}
+```
+
+`excludeUris`와 `excludeGet`을 `and`로 연결해서, 제외 URL이거나 GET 요청이면 로깅을 하지 않도록 구성했습니다.
+
+#### HTTP 필터링과 SQL 필터링은 독립적이다
+
+여기서 한 가지 짚고 넘어갈 점이 있습니다. Logbook에서 GET 요청을 제외해도, 그 GET 요청이 트리거한 SQL 쿼리는 P6Spy에서 그대로 출력됩니다. 둘은 완전히 다른 계층에서 동작하기 때문입니다.
+
+```
+GET /api/v2/products
+    ↓
+[Logbook Filter]  ← HTTP 로깅 (GET 이므로 제외됨)
+    ↓
+[Controller → Service → Repository]
+    ↓
+[P6Spy Proxy]     ← SQL 로깅 (HTTP 메서드 개념 없음, SELECT 쿼리 그대로 출력)
+    ↓
+[JDBC Driver → Database]
+```
+
+Logbook은 HTTP 계층, P6Spy는 JDBC 계층입니다. 서로의 필터링 설정은 영향을 주지 않습니다. 이 차이를 인식한 것이 다음 장에서 P6Spy의 SELECT 쿼리를 별도로 필터링하게 된 계기가 되었습니다.
