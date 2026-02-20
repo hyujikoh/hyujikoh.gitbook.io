@@ -20,7 +20,7 @@
 단순 조회 API의 SELECT 쿼리가 로그의 대부분을 차지했습니다. \
 아무리 상관관계 ID로 스레드를 구분할 수 있다 해도, 정작 봐야 할 로그가 잡음에 파묻혀 보이지 않았습니다.&#x20;
 
-**로그는 많을수록 좋은 게 아니라, 필요한 것만 남아 있어도 충분한 것이였습니다.**
+**로그는 많을수록 좋은 게 아니라, 필요한 것만 남아 있어도 충분한거라 생각합니다..**
 
 이번 글은 기술 부채로 남겨놨던 로그 정책을 개선하고 \
 그 과정에서 해결했던 문제들을 공유하고자 합니다.
@@ -54,12 +54,12 @@
 
 </code></pre>
 
-&#x20;같은 쿼리이지만 실제 다른 출력행태를 가지고 있었습니다.&#x20;
+&#x20;같은 쿼리이지만 실제 다른 출력형태를 가지고 있었습니다.&#x20;
 
 Hibernate는 \`?\`로 파라미터를 표시하고, P6Spy는 실제 값 \`42\`가 바인딩된 완성된 SQL을 보여줍니다. \
 왜 이런 차이가 발생하는지 이해하기 위해, 두 도구가 SQL을 캡처하는 위치를 파악 했습니다.
 
-<figure><img src="../../.gitbook/assets/image.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (2).png" alt=""><figcaption></figcaption></figure>
 
 **Hibernate SQL 로깅**은 JPA 내부에서 JPQL을 SQL로 변환한 시점에 기록합니다. \
 아직 JDBC 드라이버에 전달하기 전이라, 파라미터는 `?` 플레이스홀더 상태입니다. \
@@ -188,7 +188,7 @@ public static final String SWAGGER_API_DOCS_GENERATED_API = SWAGGER_API_DOCS + "
 
 공백이 포함된 경로를 그대로 상수로 정의했기 때문에, 실제 요청의 URL 인코딩된 경로와 매칭되지 않았습니다.
 
-#### Logbook은 glob 패턴을 지원한다
+#### Logbook의 glob 패턴 지원
 
 해결 방법을 찾기 위해 Logbook의 `Conditions.requestTo()` 내부 구현을 확인했습니다.\
 `javap -c -p`로 바이트코드를 디컴파일한 결과, 내부적으로 `Glob.compile()`을 호출하고 있었고, \
@@ -202,7 +202,7 @@ public static final String SWAGGER_API_DOCS_GENERATED_API = SWAGGER_API_DOCS + "
 
 즉 `/swagger-ui/**`로 작성하면 `/swagger-ui` 하위의 모든 경로가 한 줄로 매칭됩니다.
 
-#### 수정: 20개 나열에서 glob 패턴 5개로
+#### glob 패턴 으로 구조 수정
 
 ```java
 // 수정 전 - 20개 개별 파일 나열
@@ -255,16 +255,236 @@ public Logbook logbook() {
 
 여기서 한 가지 짚고 넘어갈 점이 있습니다. Logbook에서 GET 요청을 제외해도, 그 GET 요청이 트리거한 SQL 쿼리는 P6Spy에서 그대로 출력됩니다. 둘은 완전히 다른 계층에서 동작하기 때문입니다.
 
+<figure><img src="../../.gitbook/assets/image (1).png" alt=""><figcaption></figcaption></figure>
+
+Logbook은 HTTP 계층, P6Spy는 JDBC 계층입니다. \
+서로의 필터링 설정은 영향을 주지 않기 때문에 추가적인 작업이 필요했습니다.
+
+## P6Spy 쿼리 필터링 — 4번의 실패와 1번의 성공
+
+Logbook에서 GET 요청을 제외하니 HTTP 로그는 깔끔해졌습니다. \
+하지만 어플리케이션 로그에는 여전히 P6Spy의 SELECT 쿼리가 끊임없이 쏟아지고 있었습니다. \
+이전 챕터에서 정리한 것처럼, HTTP 계층의 필터링은 JDBC 계층에 영향을 주지 않기 때문입니다.
+
+개발 환경에서 확인하고 싶은 SQL은 데이터를 변경하는 INSERT, UPDATE, DELETE입니다. \
+SELECT는 대부분 정상 동작을 확인하는 용도이고, 문제가 생겼을 때는 N+1이나 슬로우 쿼리를 분석하면 됐기때문에. \
+P6Spy에서 SELECT만 걸러낼 수 있을까를 목적으로 진행하였습니다.
+
+#### 시도 1: formatMessage에서 빈 문자열 반환
+
+가장 먼저 떠오른 방법은 단순했습니다. P6Spy의 `MessageFormattingStrategy`를 구현한 커스텀 포맷터에서, SELECT 쿼리일 때 빈 문자열을 반환하면 되지 않을까?
+
+```java
+@Override
+public String formatMessage(int connectionId, String now, long elapsed,
+                            String category, String prepared, String sql, String url) {
+    if (sql != null && sql.trim().toUpperCase(Locale.ROOT).startsWith("SELECT")) {
+        return "";  // SELECT면 빈 문자열 반환
+    }
+    sql = formatSql(category, sql);
+    return String.format("[%s] | %d ms | %s", category, elapsed, sql);
+}
 ```
-GET /api/v2/products
+
+좋은 시도라고 생각했지만, 포맷터가 출력할 내용이 없으면 로그도 안 남을 거라고 생각했습니다.
+
+**결과: 실패.** 빈 로그 라인이 끊임없이 출력되었습니다.
+
+```
+2026-02-19T18:12:59.591+09:00 [http-nio-8080-exec-8] INFO p6spy :
+2026-02-19T18:12:59.593+09:00 [http-nio-8080-exec-8] INFO p6spy :
+2026-02-19T18:12:59.595+09:00 [http-nio-8080-exec-8] INFO p6spy :
+```
+
+P6Spy 내부의 `FormattedLogger.logSQL()`이 `formatMessage`의 반환값과 무관하게\
+&#x20;`logText()`를 무조건 호출하고 있었습니다. 빈 문자열이든 null이든, 로깅 파이프라인 자체는 실행됩니다.
+
+**그렇다면 아예** formatMessage 자체가 실행되지 않되게 상위 메소드를 적용하면 되지 않을까 싶었습니다.
+
+#### 시도 2: 커스텀 Appender로 빈 메시지 차단
+
+`formatMessage` 아래가 안 된다면, 그 위의 Appender 레벨에서 잡으면 되지 않을까라는 생각으로, \
+`Slf4JLogger`를 상속한 커스텀 로거를 만들어, `logText()`에서 빈 메시지를 스킵하는 방식을 시도했습니다.
+
+```java
+public class P6SpyCustomLogger extends Slf4JLogger {
+    @Override
+    public void logText(String text) {
+        if (text != null && !text.trim().isEmpty()) {
+            super.logText(text);
+        }
+    }
+}
+```
+
+등록 방식도 두 가지를 시도했습니다.
+
+**2-1) `P6SpyOptions.setAppender()`로 직접 등록**
+
+```java
+@PostConstruct
+public void setLogMessageFormat() {
+    P6SpyOptions.getActiveInstance().setAppender(P6SpyCustomLogger.class.getName());
+}
+```
+
+**결과적으로** 여전히 빈 로그가 출력되었습니다.
+
+원인을 추적하기 위해 `p6spy-spring-boot-starter`의 `P6SpyConfiguration` 클래스를\
+&#x20;`javap -c -p`로 디컴파일했습니다. `init()` 메서드에 `@PostConstruct`가 붙어 있었고, 내부에서 `P6ModuleManager.getInstance().reload()`를 호출하고 있었습니다. \
+이 `reload()`가 실행되면 P6SpyOptions의 직접 설정값이 초기화됩니다.
+
+문제는 **실행 순서**였습니다. 커스텀 Config의 `@PostConstruct`와 `P6SpyConfiguration`의 `@PostConstruct` 중 어느 것이 먼저 실행될지 보장되지 않고, 설령 먼저 실행되더라도 이후의 `reload()`가 설정을 덮어씌웁니다.
+
+**2-2) yml `custom-appender-class` 설정으로 등록**
+
+```yaml
+decorator:
+  datasource:
+    p6spy:
+      logging: custom
+      custom-appender-class: kr.co.youhost.sfep.web.v2.common.config.P6SpyCustomLogger
+```
+
+이 방식은 `P6SpyConfiguration.init()`가 yml 값을 읽어서 `System.setProperty("p6spy.config.appender", ...)`로 설정한 뒤 `reload()`를 호출합니다. \
+커스텀 Appender가 정상적으로 등록되기는 했지만, 여전히 빈 로그가 출력되었습니다.
+
+바이트코드를 다시 추적해보니, 문제는 Appender가 아니라 그 이전 단계에 있었습니다.\
+P6Spy의 `FormattedLogger`는 `logSQL()` 내부에서 `formatMessage`를 호출하고, \
+그 결과를 가지고 `logText()`를 호출합니다.&#x20;
+
+하지만 이 흐름 사이에 `FormattedLogger` 자체가 카테고리나 커넥션 정보를 prefix로 붙이는 처리가 있어서, `formatMessage`가 빈 문자열을 반환해도 prefix가 포함된 빈 메시지가 만들어져 Appender에 도달합니다.
+
+#### 시도 3: yml `log-filter.pattern` 설정
+
+`p6spy-spring-boot-starter`의 설정 속성을 탐색하다가 `log-filter.pattern`이라는 속성을 발견했습니다. \
+이 값이 내부적으로 P6Spy의 `sqlexpression` 설정으로 변환된다는 것을 바이트코드에서 확인했습니다.
+
+```yaml
+decorator:
+  datasource:
+    p6spy:
+      log-filter:
+        pattern: "(?is)(?!\\s*select).*"
+```
+
+`sqlexpression`은 P6Spy가 `formatMessage` 호출 이전에 SQL 문자열을 정규식으로 체크하는 필터입니다. \
+매칭되지 않는 SQL은 로깅 파이프라인에 아예 진입하지 않다고 가정하고 테스트를 해봤습니다.
+
+**결과적으로** SELECT 쿼리가 필터링 없이 그대로 출력되었습니다.
+
+`P6SpyConfiguration.init()`의 바이트코드를 다시 확인했지만, \
+yml의 `log-filter.pattern` 값이 `System.setProperty("p6spy.config.filter", "true")`와 `System.setProperty("p6spy.config.sqlexpression", pattern)`으로 정상 변환되는 것을 확인할 수 있었습니다. 그런데도 동작하지 않았습니다.&#x20;
+
+Spring Boot의 `Pattern` 타입 바인딩 과정에서 정규식이 변형되거나, 시스템 프로퍼티 설정과 `reload()` 사이의 타이밍 문제로 추정했지만, 정확한 원인을 끝까지 규명하지는 못했습니다.
+
+#### 시도 4: spy.properties — P6Spy 네이티브 설정
+
+Spring Boot 자동 설정을 통한 세 번의 시도가 모두 실패한 뒤, 접근 방식을 바꿨습니다. `p6spy-spring-boot-starter`를 경유하지 않고, P6Spy가 직접 읽는 네이티브 설정 파일을 사용하기로 했습니다.
+
+P6Spy는 클래스패스에서 `spy.properties`라는 파일을 직접 찾아서 읽습니다. \
+이 파일은 Spring Boot의 프로퍼티 바인딩을 거치지 않고, P6Spy의 `P6SpyOptions.load()`가 직접 파싱합니다.
+
+```properties
+# src/main/resources/spy.properties
+filter=true
+sqlexpression=(?i)^(?!select).*$
+```
+
+`filter=true`로 필터링을 활성화하고, `sqlexpression`에 "SELECT로 시작하지 않는 SQL만 매칭"하는 정규식을 설정했습니다.
+
+결과적으로 SELECT 쿼리가 완전히 사라지고, INSERT/UPDATE/DELETE만 로그에 남았습니다.
+
+#### 왜 spy.properties는 동작했는가
+
+핵심은 **설정이 읽히는 시점과 경로**의 차이입니다.
+
+```
+[Spring Boot 자동 설정 경로 (시도 1~3)]
+application.yml → P6SpyConfiguration.init() → System.setProperty() → P6ModuleManager.reload()
+                                                                         ↓
+                                                              reload 과정에서 설정이 초기화되거나
+                                                              타입 변환 과정에서 값이 변형될 수 있음
+
+[P6Spy 네이티브 경로 (시도 4)]
+spy.properties → P6SpyOptions.load() → 직접 파싱
+                                         ↓
+                                 Spring Boot를 거치지 않으므로
+                                 타입 변환, 실행 순서 문제가 없음
+```
+
+`spy.properties`는 P6Spy 초기화 시점과 `reload()` 시점 모두에서 직접 읽힙니다. \
+그리고 `sqlexpression` 필터는 `formatMessage` 호출 이전에 동작합니다.
+
+```
+SQL 실행
     ↓
-[Logbook Filter]  ← HTTP 로깅 (GET 이므로 제외됨)
+P6LogQuery: filter=true 확인
+    ↓
+Pattern.matches(sqlexpression, sql)
+    ↓
+  "select ..." → 매칭 안 됨 → 로깅 파이프라인 진입 안 함 (빈 로그 없음)
+  "insert ..." → 매칭됨 → formatMessage → logText → 로그 출력
+```
+
+## 결론. 로그 정책에서 배운 것들
+
+글에서 다룬 내용을 하나의 그림으로 정리하면 다음과 같습니다.
+
+```
+HTTP 요청
+    ↓
+[Logbook]         Swagger UI, favicon → 제외 (glob 패턴)
+                  GET 요청 → 제외
+                  POST/PUT/DELETE → 요청/응답 body 로깅
     ↓
 [Controller → Service → Repository]
     ↓
-[P6Spy Proxy]     ← SQL 로깅 (HTTP 메서드 개념 없음, SELECT 쿼리 그대로 출력)
+[P6Spy]           개발 환경: SELECT → 제외 (spy.properties)
+                             INSERT/UPDATE/DELETE → 바인딩된 완성 SQL 로깅
+                  운영 환경: 프록시 자체 비활성화 (enable-logging: false)
     ↓
 [JDBC Driver → Database]
 ```
 
-Logbook은 HTTP 계층, P6Spy는 JDBC 계층입니다. 서로의 필터링 설정은 영향을 주지 않습니다. 이 차이를 인식한 것이 다음 장에서 P6Spy의 SELECT 쿼리를 별도로 필터링하게 된 계기가 되었습니다.
+#### 돌아보며
+
+이번 리팩토링을 하면서 느낀 점은 다음과 같습니다.
+
+* **로그는 "켜는 것"보다 "끄는 것"이 더 어렵고, 더 중요한 설계 결정:** 모든 걸 켜두는 건 쉽습니다. 하지만 어떤 로그가 불필요한지 판단하려면 서비스의 특성, 환경별 요구사항, 모니터링 전략을 이해해야 합니다.
+* **HTTP 계층과 SQL 계층은 독립적으로 관리:** Logbook에서 제외되도 P6Spy의 그대로 남기 때문에\
+  각 계층의 로그는 각 계층의 도구로 필터링해야 합니다. 이 당연한 사실을 실제로 겪어보고 나서야 체감했습니다.
+* **Spring Boot 자동 설정 위에서 동작하는 라이브러리는, 네이티브 설정과의 우선순위를 반드시 확인** P6Spy처럼 자체 설정 파일(`spy.properties`)을 가진 라이브러리는 Spring Boot의 프로퍼티 바인딩과 충돌할 수 있습니다. \
+  공식 문서에 답이 없을 때, `javap -c -p`로 바이트코드를 직접 확인하는 것이 가장 확실한 디버깅 방법이었습니다.
+* **로그 정책은 계속해서 관리:** 서비스가 성장하면 로그 정책도 함께 성장해야 한다 생각합니다.\
+  이번에 정리한 설정도 트래픽 패턴이 바뀌거나 모니터링 도구가 추가되면 다시 손볼 필요가 있을 것입니다. \
+  중요한 것은 "왜 이렇게 설정했는지"를 기록해두는 것이라 생각합니다.&#x20;
+
+
+
+
+
+## 참고 문헌
+
+### **Logbook**
+
+1. **Logbook GitHub Repository**
+   * https://github.com/zalando/logbook
+2. **Logbook Conditions.java — requestTo, requestWithMethod, exclude 구현**
+   * https://github.com/zalando/logbook/blob/main/logbook-core/src/main/java/org/zalando/logbook/core/Conditions.java
+3. **Logbook Glob.java — URL 패턴 매칭 (Ant 스타일 glob → 정규식 변환)**
+   * https://github.com/zalando/logbook/blob/main/logbook-core/src/main/java/org/zalando/logbook/core/Glob.java
+
+### **P6Spy**
+
+4. **P6Spy GitHub Repository**
+   * https://github.com/p6spy/p6spy
+5. **P6Spy 공식 문서 — Configuration and Usage (filter, sqlexpression 설정)**
+   * https://p6spy.readthedocs.io/en/latest/configandusage.html
+6. **spring-boot-data-source-decorator (p6spy-spring-boot-starter) GitHub Repository**
+   * https://github.com/gavlyukovskiy/spring-boot-data-source-decorator
+
+### **Hibernate SQL 로깅**
+
+7. **Hibernate ORM 공식 문서 — Logging**
+   * https://docs.jboss.org/hibernate/orm/6.4/userguide/html\_single/Hibernate\_User\_Guide.html#best-practices-logging

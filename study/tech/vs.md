@@ -224,7 +224,7 @@ class OrderE2ETest {
 
 테스트 피라미드는 간단합니다. 이집트 피라미드처럼 **아래가 넓고 위로 갈수록 좁아지는** 구조입니다.
 
-<div data-with-frame="true"><figure><img src="../../.gitbook/assets/image (2).png" alt=""><figcaption><p>이미지 출처: <a href="https://martinfowler.com/articles/microservice-testing/#conclusion-test-pyramid">https://martinfowler.com/articles/microservice-testing/#conclusion-test-pyramid</a></p></figcaption></figure></div>
+<div data-with-frame="true"><figure><img src="../../.gitbook/assets/image (2) (1).png" alt=""><figcaption><p>이미지 출처: <a href="https://martinfowler.com/articles/microservice-testing/#conclusion-test-pyramid">https://martinfowler.com/articles/microservice-testing/#conclusion-test-pyramid</a></p></figcaption></figure></div>
 
 단위, 통합 , E2E 기준으로
 
