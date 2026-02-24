@@ -95,6 +95,7 @@
     * [면접 내용 정리 문](study/wil/26-2-wil/undefined.md)
     * [WIL: 이번주 공부 (2월 1주차)](study/wil/26-2-wil/wil-2-1.md)
     * [WIL: 이번주 공부 (2월 3주차)](study/wil/26-2-wil/wil-2-3.md)
+    * [WIL: 이번주 공부 (2월 4주차)](study/wil/26-2-wil/wil-2-4.md)
 
 ## REVIEW
 
