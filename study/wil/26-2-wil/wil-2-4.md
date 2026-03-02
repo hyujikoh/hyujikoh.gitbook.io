@@ -1,6 +1,6 @@
 # WIL: 이번주 공부 (2월 4주차)
 
-### TL: WR
+### TL; WR
 
 수동 배포에서 GitHub Actions 기반 CI/CD 파이프라인으로 전환하면서, Docker/SSH/셸 스크립트/GitHub 인프라에 대한 실전 경험을 쌓았다.
 
@@ -73,10 +73,10 @@ Spring Boot Actuator 없이 단순히 `"OK"`를 반환하는 헬스체크 엔드
 
 ### 종합 정리
 
-이번 주는 \*\*"인프라는 설계대로 한 번에 되지 않는다"\*\*는 것을 온몸으로 체감한 한 주였다.
+이번 주는 "인프라는 설계대로 한 번에 되지 않는다" 는 것을 온몸으로 체감한 한 주였다.
 
 CI/CD 파이프라인을 구축하면서 Docker(이미지 빌드, Compose, API 버전), GitHub(Actions, GHCR, Secrets, Organization 권한), Linux(SSH 키 인증, 셸 스크립트 안전성), 배포 전략(커밋 SHA 태깅, 헬스체크, 자동 롤백)까지 넓은 범위의 인프라 지식을 실전에서 익혔다.
 
 특히 인상적이었던 건 **수동으로 먼저 해보는 것의 가치**다. Phase 1에서 배포 스크립트를 직접 작성하면서 `.env 백업 → 배포 → 실패 시 복원`이라는 패턴의 필요성을 체감했고, 이것이 Phase 2의 GitHub Actions 워크플로우에 자연스럽게 녹아들었다. 자동화를 잘 하려면 수동 과정을 먼저 이해해야 한다.
 
-다음 단계로는 운영 배포 파이프라인(main → ACR → Kubernetes)과 GitOps(ArgoCD) 도입이 남아있다. 이번 주에 쌓은 Docker/GitHub Actions 경험이 기반이 될 것이다.
+다음 단계로는 운영 배포 파이프라인(main → Cloud Image Registry → Kubernetes)과 GitOps(ArgoCD) 도입이 남아있다. 이번 주에 쌓은 Docker/GitHub Actions 경험이 기반이 될 것이다.
