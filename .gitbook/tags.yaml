@@ -1,0 +1,8 @@
+- tag: wil
+  label: wil
+- tag: monitoring
+  label: monitoring
+- tag: grafana
+  label: grafana
+- tag: loki
+  label: loki
