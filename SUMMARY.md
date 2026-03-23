@@ -74,11 +74,9 @@
   * [Resilience4j 서킷 브레이커, 정말 내 서비스에서 제대로 동작하는가](study/tech/circuitbreaker.md)
   * [도메인 이벤트, 누가 관심을 가질 것인가?](study/tech/event.md)
   * [Kafka 이벤트 파이프라인 구축: 로컬 이벤트에서 글로벌로](study/tech/kafka.md)
-  * [내 카프카는 정말 쓸 값어치가 있는것일까?](study/tech/undefined.md)
   * [적절한 상황에 적절한 도구 사용 (Redis ZSET)](study/tech/redis-z-set.md)
   * [우리 배치는 정말 필요해서 만든건가?](study/tech/spring-batch.md)
   * [어플리케이션 로그, 줄여야 보인다: Logbook과 P6Spy 리팩토링으로 로그 정리](study/tech/logbook-p6spy.md)
-  * [로키 그라파나 구축 여정기](study/tech/undefined-1.md)
 * [📓 WIL](study/wil/README.md)
   * [WIL: 오늘도 우리의 과일은 신선한가요? (aka 우리의 테스트 코드는 바로 검증이 가능한걸까요?)](study/wil/fresh-fruit.md)
   * [WIL: 요구사항, E-R , ERD까지, 공사를 위한 설계도 만들기](study/wil/week2.md)
@@ -107,3 +105,10 @@
 * [회고 정리](review/undefined.md)
 * [세션 및 컨퍼런스 참여 후기](review/session/README.md)
   * [🏃‍♂️ 러너스 하이와 나의 이야기: 토스 러너스하이 1기를 돌아보며](review/session/runners-1.md)
+
+## non-publish-article
+
+* [Tech](non-publish-article/tech/README.md)
+  * [내 카프카는 정말 쓸 값어치가 있는것일까?](non-publish-article/tech/undefined.md)
+  * [로키 그라파나 구축 여정기](non-publish-article/tech/undefined-1.md)
+  * [JVM 다이브 및 이슈 해결](non-publish-article/tech/jvm.md)
