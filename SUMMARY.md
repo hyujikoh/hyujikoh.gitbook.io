@@ -111,4 +111,4 @@
 * [Tech](non-publish-article/tech/README.md)
   * [내 카프카는 정말 쓸 값어치가 있는것일까?](non-publish-article/tech/undefined.md)
   * [로키 그라파나 구축 여정기](non-publish-article/tech/undefined-1.md)
-  * [JVM 다이브 및 이슈 해결](non-publish-article/tech/jvm.md)
+  * [JVM GC 튜닝기 — Serial GC에서 G1까지, 장애 인과관계 추적](non-publish-article/tech/jvm-gc-serial-gc-g1.md)
