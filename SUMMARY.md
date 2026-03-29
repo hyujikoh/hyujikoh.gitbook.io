@@ -28,6 +28,7 @@
     * [15장 서로 다른 통화 더하기](book/tdd/1/15.md)
     * [16장 드디어 추상화](book/tdd/1/16.md)
     * [17장 회고](book/tdd/1/17.md)
+* [과학적 관리법: 프레드릭 테일러](book/undefined.md)
 
 ## Study
 
