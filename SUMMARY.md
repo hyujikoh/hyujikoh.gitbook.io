@@ -101,7 +101,8 @@
     * [WIL: 이번주 공부 (3월 2주차)](study/wil/26-3-wil/wil-3-2.md)
     * [WIL: 이번주 공부(3월 3주차)](study/wil/26-3-wil/wil-3-3.md)
     * [WIL: 이번주 공부(3월 4주차)](study/wil/26-3-wil/wil-3-4.md)
-  * [26년 4월 WIL](study/wil/26-4-wil.md)
+  * [26년 4월 WIL](study/wil/26-4-wil/README.md)
+    * [WIL: 이번주 공부(4월 1주차)](study/wil/26-4-wil/wil-4-1.md)
 
 ## REVIEW
 
