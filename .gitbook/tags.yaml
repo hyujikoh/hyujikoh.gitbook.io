@@ -1,3 +1,7 @@
+- tag: jvm
+  label: jvm
+- tag: metaspace
+  label: metaspace
 - tag: wil
   label: wil
 - tag: monitoring
