@@ -5,7 +5,7 @@ tags:
   - metaspace
 ---
 
-# JVM Metaspace, 우리 Spring Boot 서비스에서
+# JVM Metaspace, Spring Boot 관점 Deep Dive
 
 > TL;DR Metaspace는 클래스 메타데이터 저장소이며, Spring Boot 앱에서는 엔티티 메타모델, CGLIB/JDK 프록시, 생성 코드가 주요 점유 요소. `jstat`은 사용량만, `jcmd`는 내용물까지 확인할 수 있다.
 
