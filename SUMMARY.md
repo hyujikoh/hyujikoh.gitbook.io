@@ -29,6 +29,7 @@
     * [16장 드디어 추상화](book/tdd/1/16.md)
     * [17장 회고](book/tdd/1/17.md)
 * [🛠️ 과학적 관리법: 프레드릭 테일러](book/taylor-system.md)
+* [⛰️ the nature of software development](book/the-nature-of-software-development.md)
 
 ## Study
 
