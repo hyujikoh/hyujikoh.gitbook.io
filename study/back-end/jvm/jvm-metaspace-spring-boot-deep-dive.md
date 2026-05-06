@@ -13,15 +13,15 @@ tags:
 
 운영 중인 멀티테넌트 MES 서비스의 JVM 설정을 점검하던 중, `MaxMetaspaceSize=200m`이라는 숫자가 눈에 들어왔습니다. "200MB면 충분한가?", "거기엔 뭐가 들어있는 거지?"라는 질문에서 출발해 실제 코드베이스를 기반으로 Metaspace 구성을 분석했습니다.
 
-이 글은 다음 순서로 진행됩니다.
+이 글은 다음과 같은 흐름으로 진행됩니다.
 
-* 1장: Metaspace란 무엇이고 뭘 저장하는가
-* 2장: 우리 서비스 구조 기반으로 Metaspace 점유 요소 분석
-* 3장: Spring 빈이 프록시로 감싸져 Metaspace에 올라가는 과정
-* 4장: Metaspace를 모니터링하는 방법 (jstat vs jcmd)
-* 5장: 컨테이너 환경에서 Metaspace의 함정 (K8s 1Gi → 2Gi 튜닝 사례)
-* 6장: Metaspace는 왜 단방향으로 증가하는가 — 클래스 vs 인스턴스
-* 7장: MetaspaceSize vs MaxMetaspaceSize — 시작 시 불필요한 Full GC
+* Metaspace란 무엇이고 뭘 저장하는가
+* 우리 서비스 구조 기반으로 Metaspace 점유 요소 분석
+* Spring 빈이 프록시로 감싸져 Metaspace에 올라가는 과정
+* Metaspace를 모니터링하는 방법 (jstat vs jcmd)
+* 컨테이너 환경에서 Metaspace의 함정 (K8s 1Gi → 2Gi 튜닝 사례)
+* Metaspace는 왜 단방향으로 증가하는가 — 클래스 vs 인스턴스
+* MetaspaceSize vs MaxMetaspaceSize — 시작 시 불필요한 Full GC
 
 **환경 정보**
 
