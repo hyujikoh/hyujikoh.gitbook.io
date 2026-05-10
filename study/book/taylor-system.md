@@ -1,6 +1,6 @@
 # 🛠️ 과학적 관리법: 프레드릭 테일러
 
-<figure><img src="../.gitbook/assets/IMG_1054.HEIC" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/IMG_1054.HEIC" alt=""><figcaption></figcaption></figure>
 
 ### 생산성이 안좋은 인력이 생산성에 대해 이야기 하다.
 

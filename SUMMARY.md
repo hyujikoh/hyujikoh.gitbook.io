@@ -6,31 +6,6 @@
 
 * [💡 목차](overview/undefined.md)
 
-## book
-
-* [🚦 테스트 주도 개발](book/tdd/README.md)
-  * [들어가기 앞서](book/tdd/undefined.md)
-  * [💵 1부 화폐 예제](book/tdd/1/README.md)
-    * [1장 다중 통화를 지원하는 Money 객체](book/tdd/1/1-money.md)
-    * [2장 타락한 객체](book/tdd/1/2.md)
-    * [3장 모두를 위한 평등](book/tdd/1/3.md)
-    * [4장 프라이버시](book/tdd/1/4.md)
-    * [5장 솔직히말하자면](book/tdd/1/5.md)
-    * [6장 돌아온 '모두를 위한 평등'](book/tdd/1/6.md)
-    * [7장 사과와 오렌지](book/tdd/1/7.md)
-    * [8장 객체 만들기](book/tdd/1/8.md)
-    * [9장 우리가 사는 시간](book/tdd/1/9.md)
-    * [10장 흥미로운 시간](book/tdd/1/10.md)
-    * [11장 모든 악의 근원](book/tdd/1/11.md)
-    * [12장 드디어 더하기](book/tdd/1/12.md)
-    * [13장 진짜로 만들기](book/tdd/1/13.md)
-    * [14장 바꾸기](book/tdd/1/14.md)
-    * [15장 서로 다른 통화 더하기](book/tdd/1/15.md)
-    * [16장 드디어 추상화](book/tdd/1/16.md)
-    * [17장 회고](book/tdd/1/17.md)
-* [🛠️ 과학적 관리법: 프레드릭 테일러](book/taylor-system.md)
-* [⛰️ the nature of software development](book/the-nature-of-software-development.md)
-
 ## Study
 
 * [Tools](study/tools/README.md)
@@ -107,6 +82,29 @@
   * [26년 4월 WIL](study/wil/26-4-wil/README.md)
     * [WIL: 이번주 공부(4월 1주차)](study/wil/26-4-wil/wil-4-1.md)
     * [WIL: 이번주 공부(4월 2주차)](study/wil/26-4-wil/wil-4-2.md)
+* [📚 Book](study/book/README.md)
+  * [🚦 테스트 주도 개발](study/book/tdd/README.md)
+    * [들어가기 앞서](study/book/tdd/undefined.md)
+    * [💵 1부 화폐 예제](study/book/tdd/1/README.md)
+      * [1장 다중 통화를 지원하는 Money 객체](study/book/tdd/1/1-money.md)
+      * [2장 타락한 객체](study/book/tdd/1/2.md)
+      * [3장 모두를 위한 평등](study/book/tdd/1/3.md)
+      * [4장 프라이버시](study/book/tdd/1/4.md)
+      * [5장 솔직히말하자면](study/book/tdd/1/5.md)
+      * [6장 돌아온 '모두를 위한 평등'](study/book/tdd/1/6.md)
+      * [7장 사과와 오렌지](study/book/tdd/1/7.md)
+      * [8장 객체 만들기](study/book/tdd/1/8.md)
+      * [9장 우리가 사는 시간](study/book/tdd/1/9.md)
+      * [10장 흥미로운 시간](study/book/tdd/1/10.md)
+      * [11장 모든 악의 근원](study/book/tdd/1/11.md)
+      * [12장 드디어 더하기](study/book/tdd/1/12.md)
+      * [13장 진짜로 만들기](study/book/tdd/1/13.md)
+      * [14장 바꾸기](study/book/tdd/1/14.md)
+      * [15장 서로 다른 통화 더하기](study/book/tdd/1/15.md)
+      * [16장 드디어 추상화](study/book/tdd/1/16.md)
+      * [17장 회고](study/book/tdd/1/17.md)
+  * [🛠️ 과학적 관리법: 프레드릭 테일러](study/book/taylor-system.md)
+  * [⛰️ the nature of software development](study/book/the-nature-of-software-development.md)
 
 ## REVIEW
 
