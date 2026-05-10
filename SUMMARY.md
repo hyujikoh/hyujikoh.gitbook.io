@@ -2,10 +2,6 @@
 
 * [🤔 Intro](README.md)
 
-## Overview
-
-* [💡 목차](overview/undefined.md)
-
 ## Study
 
 * [Tools](study/tools/README.md)
