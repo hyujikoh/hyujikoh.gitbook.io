@@ -78,6 +78,8 @@
   * [26년 4월 WIL](study/wil/26-4-wil/README.md)
     * [WIL: 이번주 공부(4월 1주차)](study/wil/26-4-wil/wil-4-1.md)
     * [WIL: 이번주 공부(4월 2주차)](study/wil/26-4-wil/wil-4-2.md)
+  * [26년 5월 WIL](study/wil/26-5-wil/README.md)
+    * [WIL: 이번주 공부(5월 4주차)](study/wil/26-5-wil/wil-5-4.md)
 * [📚 Book](study/book/README.md)
   * [🚦 테스트 주도 개발](study/book/tdd/README.md)
     * [들어가기 앞서](study/book/tdd/undefined.md)
