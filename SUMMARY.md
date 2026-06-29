@@ -111,6 +111,7 @@
 * [세션 및 컨퍼런스 참여 후기](review/session/README.md)
   * [🏃‍♂️ 러너스 하이와 나의 이야기: 토스 러너스하이 1기를 돌아보며](review/session/runners-1.md)
   * [다시, 소프트엔지니어 북 콘서트](review/session/undefined.md)
+  * [Spring Camp 2026 참석 후기](review/session/spring-camp-2026.md)
 
 ## non-publish-article
 
