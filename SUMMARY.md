@@ -104,6 +104,7 @@
       * [17장 회고](study/book/tdd/1/17.md)
   * [🛠️ 과학적 관리법: 프레드릭 테일러](study/book/taylor-system.md)
   * [⛰️ the nature of software development](study/book/the-nature-of-software-development.md)
+  * [Real MySQL 8.0 - 1](study/book/real-mysql-8.0-1.md)
 
 ## REVIEW
 
