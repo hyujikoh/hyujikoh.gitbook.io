@@ -1,3 +1,10 @@
+---
+icon: imdb
+tags:
+  - db
+  - study
+---
+
 # Real MySQL 8.0 - 1
 
 [Real MySQL 8.0](https://elib.seoul.go.kr/contents/detail.do?no=284710853) 을 읽고 정리하기 위한 페이지

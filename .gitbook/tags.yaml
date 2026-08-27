@@ -10,3 +10,9 @@
   label: grafana
 - tag: loki
   label: loki
+- tag: db
+  label: DB
+  color: $info
+- tag: study
+  label: STUDY
+  color: green
