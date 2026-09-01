@@ -106,6 +106,7 @@
   * [⛰️ the nature of software development](study/book/the-nature-of-software-development.md)
   * [Real MySQL 8.0 - 1](study/book/real-mysql-8.0-1/README.md)
     * [내부 구조 정리 1탄](study/book/real-mysql-8.0-1/1.md)
+    * [내부 구조 정리 2탄](study/book/real-mysql-8.0-1/2.md)
 
 ## REVIEW
 

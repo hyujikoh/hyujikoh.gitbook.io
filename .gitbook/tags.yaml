@@ -12,7 +12,7 @@
   label: loki
 - tag: db
   label: DB
-  color: $info
+  color: blue
 - tag: study
   label: STUDY
   color: green
