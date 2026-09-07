@@ -1,5 +1,6 @@
 - tag: jvm
-  label: jvm
+  label: JVM
+  color: purple
 - tag: metaspace
   label: metaspace
 - tag: wil
