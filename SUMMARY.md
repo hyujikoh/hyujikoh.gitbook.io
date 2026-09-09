@@ -107,6 +107,7 @@
   * [Real MySQL 8.0 - 1](study/book/real-mysql-8.0-1/README.md)
     * [내부 구조 정리 1탄](study/book/real-mysql-8.0-1/1.md)
     * [내부 구조 정리 2탄](study/book/real-mysql-8.0-1/2.md)
+    * [4장 아키텍처](study/book/real-mysql-8.0-1/4.md)
   * [🖥️ JVM 밑바닥 파헤치기](study/book/jvm/README.md)
     * [자바 메모리 영역과 메모리 오버플로](study/book/jvm/undefined.md)
 
