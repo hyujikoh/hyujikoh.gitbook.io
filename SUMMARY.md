@@ -110,6 +110,7 @@
     * [4장 아키텍처](study/book/real-mysql-8.0-1/4.md)
   * [🖥️ JVM 밑바닥 파헤치기](study/book/jvm/README.md)
     * [자바 메모리 영역과 메모리 오버플로](study/book/jvm/undefined.md)
+    * [가비지 컬렉터와 메모리 할당 전략](study/book/jvm/undefined-1.md)
 
 ## REVIEW
 
