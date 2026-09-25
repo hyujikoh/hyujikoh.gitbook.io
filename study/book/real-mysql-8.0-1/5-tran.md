@@ -8,7 +8,7 @@ tags:
 
 트랜잭션은 여러 데이터 변경을 하나의 작업 단위로 묶어, 모두 반영하거나 모두 취소할 수 있게 한다. 잠금은 동시에 실행되는 작업이 서로 충돌할 때 접근을 조정하고, 격리 수준은 한 트랜잭션이 다른 트랜잭션의 변경을 어느 시점부터 볼 수 있는지 결정한다.
 
-세 개념은 따로 동작하지 않는다. InnoDB는 잠금과 MVCC를 함께 사용하므로, 같은 `SELECT`라도 **일반 조회인지 잠금 조회인지**, 어떤 격리 수준인지에 따라 읽는 데이터와 대기 여부가 달라진다.\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html)]\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-consistent-read.html)]\[[docs.oracle](https://docs.oracle.com/cd/E17952_01/mysql-8.4-en/innodb-locking-reads.html)]
+세 개념은 따로 동작하지 않는다. InnoDB는 잠금과 MVCC를 함께 사용하므로, 같은 `SELECT`라도 **일반 조회인지 잠금 조회인지**, 어떤 격리 수준인지에 따라 읽는 데이터와 대기 여부가 달라진다.
 
 | 구성 요소       | 핵심 목적                 | 이해할 키워드                    |
 | ----------- | --------------------- | -------------------------- |
@@ -23,21 +23,21 @@ tags:
 
 #### 트랜잭션이란
 
-트랜잭션의 출발점은 “작업의 완전성”이다. 예를 들어 주문을 확정하면서 재고를 차감해야 한다면, 주문만 확정되고 재고는 그대로 남는 결과를 피해야 한다. 두 변경을 하나의 트랜잭션으로 묶으면 성공 시 `COMMIT`, 실패 시 `ROLLBACK`으로 처리할 수 있다. MySQL은 기본적으로 자동 커밋이 켜져 있어, 명시적 트랜잭션을 시작하지 않으면 각 SQL 문이 하나의 트랜잭션처럼 실행된다.\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/commit.html)]
+트랜잭션의 출발점은 “작업의 완전성”이다. 예를 들어 주문을 확정하면서 재고를 차감해야 한다면, 주문만 확정되고 재고는 그대로 남는 결과를 피해야 한다. 두 변경을 하나의 트랜잭션으로 묶으면 성공 시 `COMMIT`, 실패 시 `ROLLBACK`으로 처리할 수 있다. MySQL은 기본적으로 자동 커밋이 켜져 있어, 명시적 트랜잭션을 시작하지 않으면 각 SQL 문이 하나의 트랜잭션처럼 실행된다.
 
 다만 트랜잭션이 애플리케이션의 모든 작업을 되돌려 주는 것은 아니다. 데이터베이스에서 롤백하더라도 이미 호출한 외부 결제 API의 결과까지 함께 롤백되지는 않는다. 따라서 트랜잭션 경계는 “함께 커밋하거나 취소해야 하는 DB 작업”을 중심으로 잡아야 한다.
 
 #### 트랜잭션 범위를 짧게 잡는 이유
 
-트랜잭션이 길어지면 보유 중인 InnoDB 잠금이 늦게 해제되고, 해당 테이블에 대한 메타데이터 락도 트랜잭션 종료까지 유지될 수 있다. 이는 다른 요청의 잠금 대기뿐 아니라 DDL 대기로도 이어질 수 있다. 그러므로 외부 API 호출, 사용자 입력 대기, 오래 걸리는 계산은 가능한 한 트랜잭션 밖에서 처리하는 편이 좋다. 단, 작업 순서가 정합성을 바꾸므로 무조건 밖으로 옮기기보다 실패·재시도 흐름까지 함께 설계해야 한다.\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-locks-set.html)]\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/metadata-locking.html)]
+트랜잭션이 길어지면 보유 중인 InnoDB 잠금이 늦게 해제되고, 해당 테이블에 대한 메타데이터 락도 트랜잭션 종료까지 유지될 수 있다. 이는 다른 요청의 잠금 대기뿐 아니라 DDL 대기로도 이어질 수 있다. 그러므로 외부 API 호출, 사용자 입력 대기, 오래 걸리는 계산은 가능한 한 트랜잭션 밖에서 처리하는 편이 좋다. 단, 작업 순서가 정합성을 바꾸므로 무조건 밖으로 옮기기보다 실패·재시도 흐름까지 함께 설계해야 한다.
 
 > 면접용 표현: “트랜잭션은 함께 성공하거나 실패해야 하는 DB 변경을 묶는 단위입니다. 범위가 길어질수록 잠금 보유 시간과 대기가 늘어나므로, 외부 통신을 포함하지 않도록 경계를 설계합니다.”
 
 ### 2. 잠금의 역할과 범위
 
-잠금은 “동시에 들어온 요청을 모두 순서대로 처리하는 기능”이라고만 설명하면 좁다. **서로 충돌하는 잠금 요청은 대기**하지만, 호환되는 요청은 동시에 진행할 수 있다. 예를 들어 InnoDB의 공유 잠금끼리는 공존할 수 있지만, 같은 대상에 대한 배타 잠금과는 충돌한다. 일반 `SELECT`의 일관된 읽기는 RC·RR에서 보통 레코드 잠금을 얻지 않으므로, 다른 트랜잭션이 해당 레코드를 수정 중이라고 해서 항상 기다리는 것도 아니다.\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-consistent-read.html)]\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-locking.html)]
+잠금은 “동시에 들어온 요청을 모두 순서대로 처리하는 기능”이라고만 설명하면 좁다. **서로 충돌하는 잠금 요청은 대기**하지만, 호환되는 요청은 동시에 진행할 수 있다. 예를 들어 InnoDB의 공유 잠금끼리는 공존할 수 있지만, 같은 대상에 대한 배타 잠금과는 충돌한다. 일반 `SELECT`의 일관된 읽기는 RC·RR에서 보통 레코드 잠금을 얻지 않으므로, 다른 트랜잭션이 해당 레코드를 수정 중이라고 해서 항상 기다리는 것도 아니다.
 
-잠금은 크게 MySQL 서버 계층에서 관리하는 것과 InnoDB가 데이터 접근을 위해 관리하는 것으로 나눠 볼 수 있다. 다만 두 계층이 완전히 독립적이라는 뜻은 아니다. 예를 들어 `LOCK TABLES`는 MySQL 계층의 테이블 락을 사용하며, 조건에 따라 InnoDB 내부 테이블 락과도 상호작용한다.\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-locks-set.html)]\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/lock-tables.html)]
+잠금은 크게 MySQL 서버 계층에서 관리하는 것과 InnoDB가 데이터 접근을 위해 관리하는 것으로 나눠 볼 수 있다. 다만 두 계층이 완전히 독립적이라는 뜻은 아니다. 예를 들어 `LOCK TABLES`는 MySQL 계층의 테이블 락을 사용하며, 조건에 따라 InnoDB 내부 테이블 락과도 상호작용한다.
 
 | 구분          | 주로 보호하는 대상                  | 대표 사례                                 |
 | ----------- | --------------------------- | ------------------------------------- |
@@ -50,33 +50,33 @@ tags:
 
 #### 글로벌 읽기 락
 
-`FLUSH TABLES WITH READ LOCK`은 서버 전체 테이블에 글로벌 읽기 락을 건다. 다른 세션의 일반적인 읽기는 허용하지만, 테이블 데이터 변경은 막는다. 백업 시 일관된 시점을 확보하는 데 사용할 수 있지만, 쓰기 요청이 몰리는 서비스에서는 영향 범위가 크다.\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/flush.html)]
+`FLUSH TABLES WITH READ LOCK`은 서버 전체 테이블에 글로벌 읽기 락을 건다. 다른 세션의 일반적인 읽기는 허용하지만, 테이블 데이터 변경은 막는다. 백업 시 일관된 시점을 확보하는 데 사용할 수 있지만, 쓰기 요청이 몰리는 서비스에서는 영향 범위가 크다.
 
 이 락은 아래의 백업 락과 이름이 비슷해도 목적과 허용 작업이 다르다.
 
 #### 백업 락
 
-`LOCK INSTANCE FOR BACKUP`은 온라인 백업 중 파일 생성·이름 변경·삭제처럼 백업 스냅샷을 불일치하게 만들 수 있는 작업을 제한한다. **일반적인 DML은 허용**한다는 점에서 글로벌 읽기 락보다 쓰기 서비스에 미치는 영향이 작다. 메모의 “CQRS 구성에서 replica를 동기화하기 위한 락”보다는, “온라인 백업의 일관성을 위해 인스턴스 파일에 영향을 주는 작업을 제한하는 락”이라고 설명하는 것이 정확하다.\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/lock-instance-for-backup.html)]
+`LOCK INSTANCE FOR BACKUP`은 온라인 백업 중 파일 생성·이름 변경·삭제처럼 백업 스냅샷을 불일치하게 만들 수 있는 작업을 제한한다. **일반적인 DML은 허용**한다는 점에서 글로벌 읽기 락보다 쓰기 서비스에 미치는 영향이 작다. 메모의 “CQRS 구성에서 replica를 동기화하기 위한 락”보다는, “온라인 백업의 일관성을 위해 인스턴스 파일에 영향을 주는 작업을 제한하는 락”이라고 설명하는 것이 정확하다.
 
 #### 테이블 락
 
-`LOCK TABLES ... READ|WRITE`는 지정한 테이블에 명시적으로 거는 잠금이다. 글로벌 읽기 락과 달리 범위가 **해당 테이블**이며, `READ`와 `WRITE`의 동작도 다르다. `READ` 락에서는 다른 세션도 읽을 수 있지만 쓸 수 없고, `WRITE` 락을 가진 세션 외에는 그 테이블에 접근할 수 없다. InnoDB에서 일반적인 행 변경을 보호하려고 직접 테이블 락을 거는 방식은 보통 우선 선택지가 아니다. 또한 `LOCK TABLES`는 활성 트랜잭션을 암묵적으로 커밋할 수 있으므로 트랜잭션 제어와 섞을 때 주의해야 한다. \[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/lock-tables.html)]
+`LOCK TABLES ... READ|WRITE`는 지정한 테이블에 명시적으로 거는 잠금이다. 글로벌 읽기 락과 달리 범위가 **해당 테이블**이며, `READ`와 `WRITE`의 동작도 다르다. `READ` 락에서는 다른 세션도 읽을 수 있지만 쓸 수 없고, `WRITE` 락을 가진 세션 외에는 그 테이블에 접근할 수 없다. InnoDB에서 일반적인 행 변경을 보호하려고 직접 테이블 락을 거는 방식은 보통 우선 선택지가 아니다. 또한 `LOCK TABLES`는 활성 트랜잭션을 암묵적으로 커밋할 수 있으므로 트랜잭션 제어와 섞을 때 주의해야 한다.&#x20;
 
 #### 네임드 락
 
-`GET_LOCK('이름', 대기시간)`은 테이블이나 레코드가 아닌, **문자열 이름**을 대상으로 서버 단위의 배타 잠금을 얻는다. 여러 웹 서버가 하나의 MySQL 서버에 접속한다면 동일한 잠금 이름에 합의해 특정 작업을 상호 배제하는 데 사용할 수 있다. 다만 이 락은 `COMMIT`이나 `ROLLBACK`으로 해제되지 않는다. 명시적으로 `RELEASE_LOCK()`을 호출하거나 세션이 종료되어야 하므로, 커넥션 풀을 쓰는 애플리케이션에서는 해제 누락에 특히 주의해야 한다. 여러 MySQL 서버 사이를 가로지르는 잠금도 아니다.\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/locking-functions.html)]
+`GET_LOCK('이름', 대기시간)`은 테이블이나 레코드가 아닌, **문자열 이름**을 대상으로 서버 단위의 배타 잠금을 얻는다. 여러 웹 서버가 하나의 MySQL 서버에 접속한다면 동일한 잠금 이름에 합의해 특정 작업을 상호 배제하는 데 사용할 수 있다. 다만 이 락은 `COMMIT`이나 `ROLLBACK`으로 해제되지 않는다. 명시적으로 `RELEASE_LOCK()`을 호출하거나 세션이 종료되어야 하므로, 커넥션 풀을 쓰는 애플리케이션에서는 해제 누락에 특히 주의해야 한다. 여러 MySQL 서버 사이를 가로지르는 잠금도 아니다.
 
 #### 메타데이터 락
 
-메타데이터 락(MDL)은 테이블의 정의와 접근을 조정한다. `ALTER TABLE`처럼 구조를 바꿀 때만 획득하는 락이 아니다. 일반 트랜잭션이 테이블을 사용해도 해당 테이블의 메타데이터 락을 얻으며, 트랜잭션이 끝날 때까지 유지될 수 있다. 따라서 오래 열린 트랜잭션 하나가 `ALTER TABLE`을 기다리게 만들 수 있다. 운영 중 DDL이 멈춘 것처럼 보이면 행 락뿐 아니라 MDL 대기도 확인해야 한다.\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/metadata-locking.html)]
+메타데이터 락(MDL)은 테이블의 정의와 접근을 조정한다. `ALTER TABLE`처럼 구조를 바꿀 때만 획득하는 락이 아니다. 일반 트랜잭션이 테이블을 사용해도 해당 테이블의 메타데이터 락을 얻으며, 트랜잭션이 끝날 때까지 유지될 수 있다. 따라서 오래 열린 트랜잭션 하나가 `ALTER TABLE`을 기다리게 만들 수 있다. 운영 중 DDL이 멈춘 것처럼 보이면 행 락뿐 아니라 MDL 대기도 확인해야 한다.
 
 ### 4. InnoDB의 잠금
 
 #### 왜 인덱스 레코드를 잠그는가
 
-InnoDB의 “행 잠금”은 실제로는 **인덱스 레코드에 거는 잠금**이다. 명시적인 인덱스가 없는 테이블에도 InnoDB는 숨겨진 클러스터드 인덱스를 만들어 잠금에 사용한다. 또한 보조 인덱스를 통해 탐색하면서 배타 잠금을 얻는 경우, 대응하는 클러스터드 인덱스 레코드에도 잠금을 걸 수 있다.\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-locks-set.html)]\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-locking.html)]
+InnoDB의 “행 잠금”은 실제로는 **인덱스 레코드에 거는 잠금**이다. 명시적인 인덱스가 없는 테이블에도 InnoDB는 숨겨진 클러스터드 인덱스를 만들어 잠금에 사용한다. 또한 보조 인덱스를 통해 탐색하면서 배타 잠금을 얻는 경우, 대응하는 클러스터드 인덱스 레코드에도 잠금을 걸 수 있다.
 
-이 설계를 이해할 때 핵심은 “최종적으로 몇 행을 수정했는가”보다 “실행 계획이 어떤 인덱스의 어느 범위를 훑었는가”다. 잠금 조회·`UPDATE`·`DELETE`는 검색 과정에서 스캔한 인덱스 레코드에 잠금을 걸 수 있다. 적절한 인덱스가 없어 전체 테이블을 스캔하면 잠금 범위가 크게 늘어난다. 다만 RC에서는 조건에 맞지 않는 레코드의 잠금을 조건 평가 후 해제하는 등, **격리 수준에 따라 유지 범위가 다르다.**\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html)]\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-locks-set.html)]
+이 설계를 이해할 때 핵심은 “최종적으로 몇 행을 수정했는가”보다 “실행 계획이 어떤 인덱스의 어느 범위를 훑었는가”다. 잠금 조회·`UPDATE`·`DELETE`는 검색 과정에서 스캔한 인덱스 레코드에 잠금을 걸 수 있다. 적절한 인덱스가 없어 전체 테이블을 스캔하면 잠금 범위가 크게 늘어난다. 다만 RC에서는 조건에 맞지 않는 레코드의 잠금을 조건 평가 후 해제하는 등, **격리 수준에 따라 유지 범위가 다르다.**
 
 #### 주요 잠금 종류
 
@@ -88,11 +88,11 @@ InnoDB의 “행 잠금”은 실제로는 **인덱스 레코드에 거는 잠�
 | 삽입 의도 락    | 삽입하려는 갭            | 삽입 의사를 표시하며, 삽입 위치가 충돌하지 않으면 동시 삽입 허용 |
 | AUTO-INC 락 | 자동 증가 값이 필요한 테이블   | 삽입 시 자동 증가 값 할당 조정                    |
 
-갭 락은 기존 레코드 자체를 수정하지 못하게 하는 잠금이 아니라, **그 간격으로의 삽입을 억제**하는 잠금이다. 넥스트 키 락은 레코드 락과 _해당 레코드 앞의_ 갭 락을 결합한 것이다. 예를 들어 인덱스 값이 `10`, `20`일 때 범위 조회가 `(10, 20]`을 넥스트 키 락으로 보호한다면, 다른 트랜잭션이 그 사이에 `15`를 삽입하는 것을 막을 수 있다.\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-locking.html)]
+갭 락은 기존 레코드 자체를 수정하지 못하게 하는 잠금이 아니라, **그 간격으로의 삽입을 억제**하는 잠금이다. 넥스트 키 락은 레코드 락과 _해당 레코드 앞의_ 갭 락을 결합한 것이다. 예를 들어 인덱스 값이 `10`, `20`일 때 범위 조회가 `(10, 20]`을 넥스트 키 락으로 보호한다면, 다른 트랜잭션이 그 사이에 `15`를 삽입하는 것을 막을 수 있다.
 
-메모의 `skip lock`은 잠금 종류라기보다 `SKIP LOCKED` 옵션을 뜻하는 것으로 보는 편이 자연스럽다. `SELECT ... FOR UPDATE SKIP LOCKED`는 이미 잠긴 행을 기다리지 않고 결과에서 제외한다. 작업 큐에서 여러 워커가 서로 다른 작업을 선점할 때 유용하지만, 잠긴 행을 건너뛴 **불완전한 조회 결과**를 반환하므로 일반적인 목록 조회에 그대로 쓰면 안 된다. `NOWAIT`은 잠긴 행을 만나면 기다리지 않고 오류를 반환한다.\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-locking-reads.html)]
+메모의 `skip lock`은 잠금 종류라기보다 `SKIP LOCKED` 옵션을 뜻하는 것으로 보는 편이 자연스럽다. `SELECT ... FOR UPDATE SKIP LOCKED`는 이미 잠긴 행을 기다리지 않고 결과에서 제외한다. 작업 큐에서 여러 워커가 서로 다른 작업을 선점할 때 유용하지만, 잠긴 행을 건너뛴 **불완전한 조회 결과**를 반환하므로 일반적인 목록 조회에 그대로 쓰면 안 된다. `NOWAIT`은 잠긴 행을 만나면 기다리지 않고 오류를 반환한다.
 
-자동 증가 값과 관련해서도 “INSERT마다 항상 동일한 테이블 락을 건다”고 외우면 부정확하다. `innodb_autoinc_lock_mode`와 삽입 형태에 따라 AUTO-INC 테이블 락의 사용 여부가 달라지며, 사용하더라도 그 락을 트랜잭션 끝이 아닌 **SQL 문장 끝까지** 유지하는 경우가 있다.\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-locks-set.html)]\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-locking.html)]
+자동 증가 값과 관련해서도 “INSERT마다 항상 동일한 테이블 락을 건다”고 외우면 부정확하다. `innodb_autoinc_lock_mode`와 삽입 형태에 따라 AUTO-INC 테이블 락의 사용 여부가 달라지며, 사용하더라도 그 락을 트랜잭션 끝이 아닌 **SQL 문장 끝까지** 유지하는 경우가 있다.
 
 #### 인덱스가 잠금 범위를 바꾸는 예
 
@@ -102,13 +102,13 @@ SET status = 'PAID'
 WHERE order_id = 100;
 ```
 
-`order_id`를 유니크 인덱스로 정확히 찾는다면, 해당 인덱스 레코드만 잠그는 방식으로 범위를 좁힐 수 있다. 반대로 검색 조건에 적절한 인덱스가 없어 많은 레코드를 스캔하면, 실제로 변경되는 행은 적더라도 더 넓은 잠금과 대기가 발생할 수 있다. 그래서 잠금 경합을 볼 때는 먼저 `WHERE` 절 자체보다 **실행 계획과 실제 인덱스 탐색 범위**를 확인해야 한다.\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html)]\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-locks-set.html)]
+`order_id`를 유니크 인덱스로 정확히 찾는다면, 해당 인덱스 레코드만 잠그는 방식으로 범위를 좁힐 수 있다. 반대로 검색 조건에 적절한 인덱스가 없어 많은 레코드를 스캔하면, 실제로 변경되는 행은 적더라도 더 넓은 잠금과 대기가 발생할 수 있다. 그래서 잠금 경합을 볼 때는 먼저 `WHERE` 절 자체보다 **실행 계획과 실제 인덱스 탐색 범위**를 확인해야 한다.
 
-> “왜 InnoDB는 이렇게 설계했을까?”에 대한 답은, 레코드 하나의 충돌뿐 아니라 **인덱스 범위에 새 레코드가 들어오는 충돌**도 제어해야 하기 때문이다. 기존 레코드를 잠그는 레코드 락과 삽입 범위를 보호하는 갭·넥스트 키 락을 구분하면 이 구조가 이해된다.\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-locking.html)]
+> “왜 InnoDB는 이렇게 설계했을까?”에 대한 답은, 레코드 하나의 충돌뿐 아니라 **인덱스 범위에 새 레코드가 들어오는 충돌**도 제어해야 하기 때문이다. 기존 레코드를 잠그는 레코드 락과 삽입 범위를 보호하는 갭·넥스트 키 락을 구분하면 이 구조가 이해된다.
 
 ### 5. 격리 수준과 읽기 방식
 
-격리 수준을 외울 때는 이상 현상 이름만 나열하기보다, **일반 `SELECT`가 어떤 스냅샷을 읽는지**와 **잠금 조회·변경 SQL이 현재 데이터에 어떻게 접근하는지**를 나눠야 한다. InnoDB의 기본 격리 수준은 `REPEATABLE READ`(RR)이다.\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html)]\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-consistent-read.html)]
+격리 수준을 외울 때는 이상 현상 이름만 나열하기보다, **일반 `SELECT`가 어떤 스냅샷을 읽는지**와 **잠금 조회·변경 SQL이 현재 데이터에 어떻게 접근하는지**를 나눠야 한다. InnoDB의 기본 격리 수준은 `REPEATABLE READ`(RR)이다.
 
 | 격리 수준                 | 일반적인 읽기의 특징                  | 주의할 점                                   |
 | --------------------- | ---------------------------- | --------------------------------------- |
@@ -117,31 +117,60 @@ WHERE order_id = 100;
 | REPEATABLE READ (RR)  | 첫 일관된 읽기의 스냅샷을 이후 일반 조회에 재사용 | 일반 조회와 잠금 조회·DML의 결과를 동일한 시점으로 가정하면 안 됨 |
 | SERIALIZABLE          | 더 강한 잠금 규칙을 적용               | 동시 처리 시 대기가 늘 수 있음                      |
 
-RU에서는 더티 리드가 가능하다. RC에서는 각 일관된 읽기가 새 스냅샷을 사용하므로, 다른 트랜잭션이 커밋한 변경이 같은 트랜잭션의 다음 일반 `SELECT`에 보일 수 있다. RR에서는 트랜잭션에 “고유 번호가 있어서 같은 값을 읽는다”기보다, **첫 일관된 읽기에서 정한 Read View를 재사용한다**고 설명하는 것이 정확하다. 단, 자신이 트랜잭션 안에서 변경한 내용은 볼 수 있다.\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html)]\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-consistent-read.html)]
+RU에서는 더티 리드가 가능하다. RC에서는 각 일관된 읽기가 새 스냅샷을 사용하므로, 다른 트랜잭션이 커밋한 변경이 같은 트랜잭션의 다음 일반 `SELECT`에 보일 수 있다. RR에서는 트랜잭션에 “고유 번호가 있어서 같은 값을 읽는다”기보다, **첫 일관된 읽기에서 정한 Read View를 재사용한다**고 설명하는 것이 정확하다. 단, 자신이 트랜잭션 안에서 변경한 내용은 볼 수 있다.
 
 #### RR과 팬텀 리드의 관계
 
-“RR에서도 팬텀 리드가 발생한다”는 문장은 **읽기 방식을 명시하지 않으면 오해를 부른다.** RR에서 같은 조건의 일반 `SELECT`를 반복하면 같은 스냅샷을 보기 때문에, 다른 트랜잭션이 그사이 삽입·커밋한 행이 다음 일반 조회에 곧바로 나타나지 않는다. 반면 `SELECT ... FOR UPDATE` 같은 잠금 조회와 `UPDATE`·`DELETE`는 최신 상태를 대상으로 동작하며, 범위 검색에서는 넥스트 키 락 등을 사용해 삽입을 막는다. 일반 조회와 잠금 조회를 한 트랜잭션에서 섞으면 서로 다른 시점의 데이터를 보는 듯한 결과를 만날 수 있다.\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html)]\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-consistent-read.html)]\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-locking.html)]
+“RR에서도 팬텀 리드가 발생한다”는 문장은 **읽기 방식을 명시하지 않으면 오해를 부른다.** RR에서 같은 조건의 일반 `SELECT`를 반복하면 같은 스냅샷을 보기 때문에, 다른 트랜잭션이 그사이 삽입·커밋한 행이 다음 일반 조회에 곧바로 나타나지 않는다. 반면 `SELECT ... FOR UPDATE` 같은 잠금 조회와 `UPDATE`·`DELETE`는 최신 상태를 대상으로 동작하며, 범위 검색에서는 넥스트 키 락 등을 사용해 삽입을 막는다. 일반 조회와 잠금 조회를 한 트랜잭션에서 섞으면 서로 다른 시점의 데이터를 보는 듯한 결과를 만날 수 있다.
 
-예를 들어 RR 트랜잭션 A가 일반 `SELECT`로 `status = 'READY'`인 주문을 조회한 뒤, 트랜잭션 B가 새 `READY` 주문을 삽입하고 커밋했다고 하자. A가 **같은 일반 `SELECT`**&#xB97C; 다시 실행하면 기존 스냅샷을 따른다. 하지만 A가 이후 잠금 조회나 변경 SQL을 실행할 때까지 “모든 SQL이 첫 조회와 동일한 데이터 집합만 다룬다”고 기대해서는 안 된다.\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html)]\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-consistent-read.html)]
+예를 들어 RR 트랜잭션 A가 일반 `SELECT`로 `status = 'READY'`인 주문을 조회한 뒤, 트랜잭션 B가 새 `READY` 주문을 삽입하고 커밋했다고 하자. A가 **같은 일반 `SELECT`**&#xB97C; 다시 실행하면 기존 스냅샷을 따른다. 하지만 A가 이후 잠금 조회나 변경 SQL을 실행할 때까지 “모든 SQL이 첫 조회와 동일한 데이터 집합만 다룬다”고 기대해서는 안 된다.
 
 #### 운영에서 구분할 지표
 
-잠금 문제가 의심될 때는 먼저 **행 잠금 대기인지, 메타데이터 락 대기인지** 분리한다. InnoDB의 보유·대기 중인 데이터 락은 `performance_schema.data_locks`, 대기 관계는 `performance_schema.data_lock_waits`에서 확인할 수 있다. 메타데이터 락은 `performance_schema.metadata_locks`에서 확인한다. 이 정보는 시점마다 바뀌므로, 관측 결과를 실행 계획·트랜잭션 지속 시간과 함께 해석해야 한다.\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-information-schema-transactions.html)]\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/performance-schema-metadata-locks-table.html)]\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-information-schema-internal-data.html)]
+잠금 문제가 의심될 때는 먼저 **행 잠금 대기인지, 메타데이터 락 대기인지** 분리한다. InnoDB의 보유·대기 중인 데이터 락은 `performance_schema.data_locks`, 대기 관계는 `performance_schema.data_lock_waits`에서 확인할 수 있다. 메타데이터 락은 `performance_schema.metadata_locks`에서 확인한다. 이 정보는 시점마다 바뀌므로, 관측 결과를 실행 계획·트랜잭션 지속 시간과 함께 해석해야 한다.
 
 ### 6. 용어 요약
 
 **트랜잭션**\
-트랜잭션은 함께 성공하거나 취소해야 하는 DB 변경을 하나로 묶는 단위입니다. 범위가 길어지면 잠금 보유 시간도 늘 수 있으므로, 외부 API 호출이나 긴 연산은 트랜잭션 경계에서 분리해 설계합니다.\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/commit.html)]\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-locks-set.html)]
+트랜잭션은 함께 성공하거나 취소해야 하는 DB 변경을 하나로 묶는 단위입니다. 범위가 길어지면 잠금 보유 시간도 늘 수 있으므로, 외부 API 호출이나 긴 연산은 트랜잭션 경계에서 분리해 설계합니다.
 
 **잠금**\
-잠금은 동시 요청을 무조건 직렬화하는 기능이 아니라, 같은 자원에 대한 충돌하는 접근을 조정하는 기능입니다. InnoDB에서는 일반적인 행 잠금을 인덱스 레코드에 걸기 때문에, 실행 계획과 인덱스 탐색 범위가 잠금 범위에 직접 영향을 줍니다.\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-locks-set.html)]\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-locking.html)]
+잠금은 동시 요청을 무조건 직렬화하는 기능이 아니라, 같은 자원에 대한 충돌하는 접근을 조정하는 기능입니다. InnoDB에서는 일반적인 행 잠금을 인덱스 레코드에 걸기 때문에, 실행 계획과 인덱스 탐색 범위가 잠금 범위에 직접 영향을 줍니다.
 
 **MySQL 서버 잠금**\
-글로벌 읽기 락은 서버 전반의 쓰기를 막는 반면, 백업 락은 일반 DML을 허용하면서 백업 일관성을 해치는 파일 관련 작업을 제한합니다. 메타데이터 락은 일반 트랜잭션도 획득하므로, 오래 열린 트랜잭션이 DDL을 막을 수 있습니다.\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/metadata-locking.html)]\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/flush.html)]\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/lock-instance-for-backup.html)]
+글로벌 읽기 락은 서버 전반의 쓰기를 막는 반면, 백업 락은 일반 DML을 허용하면서 백업 일관성을 해치는 파일 관련 작업을 제한합니다. 메타데이터 락은 일반 트랜잭션도 획득하므로, 오래 열린 트랜잭션이 DDL을 막을 수 있습니다.
 
 **InnoDB 범위 잠금**\
-레코드 락은 인덱스 레코드를, 갭 락은 삽입 가능한 간격을 보호합니다. 넥스트 키 락은 둘을 결합해 범위 내 새 행의 삽입까지 제어하며, 실제 사용 범위는 격리 수준과 검색 조건에 따라 달라집니다.\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html)]\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-locking.html)]
+레코드 락은 인덱스 레코드를, 갭 락은 삽입 가능한 간격을 보호합니다. 넥스트 키 락은 둘을 결합해 범위 내 새 행의 삽입까지 제어하며, 실제 사용 범위는 격리 수준과 검색 조건에 따라 달라집니다.
 
 **격리 수준**\
-RC의 일반 조회는 매번 새 스냅샷을 만들고, RR의 일반 조회는 첫 일관된 읽기의 스냅샷을 재사용합니다. 단, 잠금 조회와 DML은 일반 조회와 읽기 방식이 다르므로 “RR이면 한 트랜잭션의 모든 SQL이 같은 시점을 본다”고 설명하면 부정확합니다.\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html)]\[[dev.mysql](https://dev.mysql.com/doc/refman/8.4/en/innodb-consistent-read.html)]
+RC의 일반 조회는 매번 새 스냅샷을 만들고, RR의 일반 조회는 첫 일관된 읽기의 스냅샷을 재사용합니다. 단, 잠금 조회와 DML은 일반 조회와 읽기 방식이 다르므로 “RR이면 한 트랜잭션의 모든 SQL이 같은 시점을 본다”고 설명하면 부정확합니다.
+
+
+
+
+
+### 참고 문서 <a href="#undefined" id="undefined"></a>
+
+#### 트랜잭션과 격리 수준 <a href="#undefined" id="undefined"></a>
+
+* [START TRANSACTION, COMMIT, and ROLLBACK Statements — MySQL 8.4](https://dev.mysql.com/doc/refman/8.4/en/commit.html): 트랜잭션 시작·커밋·롤백
+* [Transaction Isolation Levels — MySQL 8.4](https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html): RU·RC·RR·SERIALIZABLE의 동작
+* [Consistent Nonlocking Reads — MySQL 8.4](https://dev.mysql.com/doc/refman/8.4/en/innodb-consistent-read.html): MVCC 기반 일관된 읽기와 스냅샷
+* [Locking Reads — MySQL 8.4](https://dev.mysql.com/doc/refman/8.4/en/innodb-locking-reads.html): `FOR UPDATE`, `NOWAIT`, `SKIP LOCKED`
+
+#### MySQL 서버 계층의 잠금 <a href="#mysql" id="mysql"></a>
+
+* [FLUSH Statement — MySQL 8.4](https://dev.mysql.com/doc/refman/8.4/en/flush.html): `FLUSH TABLES WITH READ LOCK`
+* [LOCK INSTANCE FOR BACKUP — MySQL 8.4](https://dev.mysql.com/doc/refman/8.4/en/lock-instance-for-backup.html): 백업 락
+* [LOCK TABLES and UNLOCK TABLES — MySQL 8.4](https://dev.mysql.com/doc/refman/8.4/en/lock-tables.html): 명시적 테이블 락
+* [Locking Functions — MySQL 8.4](https://dev.mysql.com/doc/refman/8.4/en/locking-functions.html): `GET_LOCK()`, `RELEASE_LOCK()` 등 네임드 락
+* [Metadata Locking — MySQL 8.4](https://dev.mysql.com/doc/refman/8.4/en/metadata-locking.html): 메타데이터 락과 DDL 대기
+
+#### InnoDB 잠금과 운영 지표 <a href="#innodb" id="innodb"></a>
+
+* [InnoDB Locking — MySQL 8.4](https://dev.mysql.com/doc/refman/8.4/en/innodb-locking.html): 레코드·갭·넥스트 키·삽입 의도·AUTO-INC 락
+* [Locks Set by Different SQL Statements — MySQL 8.4](https://dev.mysql.com/doc/refman/8.4/en/innodb-locks-set.html): SQL별 잠금 획득 범위
+* [InnoDB Transaction and Locking Information — MySQL 8.4](https://dev.mysql.com/doc/refman/8.4/en/innodb-information-schema-transactions.html): 트랜잭션 및 데이터 락 관측
+* [The `metadata_locks` Table — MySQL 8.4](https://dev.mysql.com/doc/refman/8.4/en/performance-schema-metadata-locks-table.html): 메타데이터 락 확인
+* [Persistence and Consistency of InnoDB Transaction and Locking Information — MySQL 8.4](https://dev.mysql.com/doc/refman/8.4/en/innodb-information-schema-internal-data.html): 잠금 정보가 시점에 따라 달라지는 점
