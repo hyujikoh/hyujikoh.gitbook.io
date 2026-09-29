@@ -105,18 +105,18 @@
   * [🛠️ 과학적 관리법: 프레드릭 테일러](study/book/taylor-system.md)
   * [⛰️ the nature of software development](study/book/the-nature-of-software-development.md)
   * [Real MySQL 8.0 - 1](study/book/real-mysql-8.0-1/README.md)
-    * [내부 구조 정리 1탄](study/book/real-mysql-8.0-1/1.md)
+    * [아키텍처 (원본)](study/book/real-mysql-8.0-1/undefined.md)
     * [5장 트랜잭션과 잠금](study/book/real-mysql-8.0-1/5-tran.md)
     * [5장 트랜잭션과 잠금 (원본)](study/book/real-mysql-8.0-1/5-tran-1.md)
     * [4장 아키텍처](study/book/real-mysql-8.0-1/4-arch.md)
     * [8장 인덱스](study/book/real-mysql-8.0-1/8.md)
+    * [9장 실행계획](study/book/real-mysql-8.0-1/9.md)
   * [🖥️ JVM 밑바닥 파헤치기](study/book/jvm/README.md)
     * [자바 메모리 영역과 메모리 오버플로](study/book/jvm/undefined.md)
     * [가비지 컬렉터와 메모리 할당 전략](study/book/jvm/undefined-1.md)
 
 ## REVIEW
 
-* [회고 정리](review/undefined.md)
 * [세션 및 컨퍼런스 참여 후기](review/session/README.md)
   * [🏃‍♂️ 러너스 하이와 나의 이야기: 토스 러너스하이 1기를 돌아보며](review/session/runners-1.md)
   * [다시, 소프트엔지니어 북 콘서트](review/session/undefined.md)
