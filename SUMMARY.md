@@ -110,7 +110,7 @@
     * [5장 트랜잭션과 잠금 (원본)](study/book/real-mysql-8.0-1/5-tran-1.md)
     * [4장 아키텍처](study/book/real-mysql-8.0-1/4-arch.md)
     * [8장 인덱스](study/book/real-mysql-8.0-1/8.md)
-    * [9장 실행계획](study/book/real-mysql-8.0-1/9.md)
+    * [9장 옵티마이저](study/book/real-mysql-8.0-1/9.md)
     * [10장 실행계획](study/book/real-mysql-8.0-1/10.md)
   * [🖥️ JVM 밑바닥 파헤치기](study/book/jvm/README.md)
     * [자바 메모리 영역과 메모리 오버플로](study/book/jvm/undefined.md)
