@@ -115,6 +115,8 @@
   * [🖥️ JVM 밑바닥 파헤치기](study/book/jvm/README.md)
     * [자바 메모리 영역과 메모리 오버플로](study/book/jvm/undefined.md)
     * [가비지 컬렉터와 메모리 할당 전략](study/book/jvm/undefined-1.md)
+  * [🐗 데이터 중심 어플리케이션 설계](study/book/undefined/README.md)
+    * [신뢰할 수 있고 확장 가능하며 유지보수하기 쉬운 APP](study/book/undefined/app.md)
 
 ## REVIEW
 
