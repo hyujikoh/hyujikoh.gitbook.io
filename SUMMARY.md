@@ -119,6 +119,7 @@
     * [🐗 데이터 중심 어플리케이션 설계](study/book/undefined/undefined/README.md)
       * [신뢰할 수 있고 확장 가능하며 유지보수하기 쉬운 APP](study/book/undefined/undefined/app.md)
       * [데이터 모델과 질의 언어](study/book/undefined/undefined/undefined.md)
+      * [저장소와 검색](study/book/undefined/undefined/undefined-1.md)
 
 ## REVIEW
 
